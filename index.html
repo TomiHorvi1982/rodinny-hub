@@ -13,8 +13,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <!-- Firebase SDK — musí být před scriptem appky -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -2216,13 +2216,29 @@ function renderWPModal(){
   const grid=document.getElementById('wp-grid');
   const trow=document.getElementById('theme-row');
   if(!grid||!trow)return;
-  grid.innerHTML=WALLPAPERS.map(wp=>{
+  grid.innerHTML='';
+  WALLPAPERS.forEach(wp=>{
     let bgStyle=wp.style;
     if(wp.id==='custom'&&_customWP)bgStyle='background-image:url('+_customWP+');background-size:cover;background-position:center';
     else if(wp.id==='custom')bgStyle='background:var(--s2)';
-    return '<div class="wp-tile'+((_curWP===wp.id)?' on':'')+'" data-wp="'+wp.id+'" style="'+bgStyle+'" onclick="applyWallpaper(''+wp.id+'')"><span style="font-size:1.8rem;filter:drop-shadow(0 1px 4px rgba(0,0,0,.7))">'+wp.emoji+'</span></div>';
-  }).join('');
-  trow.innerHTML=THEMES.map(t=>'<div class="theme-dot'+((_curTheme===t.id)?' on':'')+'" data-theme="'+t.id+'" style="background:'+t.accent+';box-shadow:0 2px 8px '+t.accent+'66" onclick="applyTheme(''+t.id+'')" title="'+t.name+'"></div>').join('');
+    const d=document.createElement('div');
+    d.className='wp-tile'+((_curWP===wp.id)?' on':'');
+    d.dataset.wp=wp.id;
+    d.setAttribute('style',bgStyle);
+    d.onclick=function(){applyWallpaper(wp.id);};
+    d.innerHTML='<span style="font-size:1.8rem;filter:drop-shadow(0 1px 4px rgba(0,0,0,.7))">'+wp.emoji+'</span>';
+    grid.appendChild(d);
+  });
+  trow.innerHTML='';
+  THEMES.forEach(t=>{
+    const d=document.createElement('div');
+    d.className='theme-dot'+((_curTheme===t.id)?' on':'');
+    d.dataset.theme=t.id;
+    d.title=t.name;
+    d.setAttribute('style','background:'+t.accent+';box-shadow:0 2px 8px '+t.accent+'66');
+    d.onclick=function(){applyTheme(t.id);};
+    trow.appendChild(d);
+  });
 }
 const _origOpenM=openM;
 window.openM=function(id){_origOpenM(id);if(id==='m-wallpaper')renderWPModal();};
