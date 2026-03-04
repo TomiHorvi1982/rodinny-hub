@@ -1,0 +1,2237 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rodinný Hub">
+<meta name="theme-color" content="#0d1117">
+<link rel="manifest" id="pwa-manifest">
+<title>🏠 Rodinný Hub</title>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<!-- Firebase SDK — musí být před scriptem appky -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d1117;--s1:#161b27;--s2:#1e2535;--s3:#252d40;--s4:#2e3850;
+  --green:#3dd68c;--red:#ff5572;--yellow:#ffd166;--blue:#4da6ff;
+  --purple:#b57bee;--orange:#ff8c42;--pink:#ff6eb4;--teal:#2dd4bf;
+  --text:#eef2ff;--muted:#7a8aaa;--border:#2a3350;
+  --r:16px;--rs:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+body{font-family:'Nunito',sans-serif;font-size:14px;color:var(--text);display:flex;flex-direction:column;}
+
+
+/* ── WALLPAPER & THEMES ── */
+#app-page{background:var(--bg);background-size:cover;background-position:center;transition:background .4s;}
+.wp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;}
+.wp-tile{border-radius:12px;height:70px;cursor:pointer;border:2px solid transparent;transition:all .2s;display:flex;align-items:center;justify-content:center;font-size:1.4rem;}
+.wp-tile.on{border-color:var(--yellow);box-shadow:0 0 12px rgba(255,209,102,.4);}
+.wp-tile.wp-custom{background:var(--s2);border-style:dashed;border-color:var(--border);font-size:1rem;color:var(--muted);}
+.theme-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.theme-dot{width:36px;height:36px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all .2s;}
+.theme-dot.on{border-color:white;transform:scale(1.15);}
+
+/* ── BIGGER PAGE CONTENT ── */
+.page{padding:14px 16px 100px;}
+.sec-hd{font-size:1.15rem;margin:14px 0 10px;}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* ── LOCK SCREEN ── */
+#lock-screen{
+  position:fixed;inset:0;z-index:1000;
+  background:linear-gradient(160deg,#0d1117 0%,#1a1040 50%,#0d1117 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:20px;padding:30px;text-align:center;
+}
+.lock-icon{font-size:5rem;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+.lock-title{font-family:'Fredoka One',cursive;font-size:2.2rem;color:var(--yellow);line-height:1.1;}
+.lock-sub{color:var(--muted);font-size:0.9rem;max-width:280px;line-height:1.6;}
+.lock-progress{width:100%;max-width:300px;}
+.lock-bar-wrap{background:var(--s2);border-radius:20px;height:14px;overflow:hidden;border:1px solid var(--border);}
+.lock-bar-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--purple),var(--blue));transition:width .5s;}
+.lock-label{font-size:0.8rem;color:var(--muted);margin-top:6px;}
+.lock-btn{
+  background:linear-gradient(135deg,var(--yellow),var(--orange));color:#0d1117;
+  border:none;border-radius:30px;padding:14px 36px;font-family:'Fredoka One',cursive;
+  font-size:1.1rem;cursor:pointer;transition:transform .15s;
+  box-shadow:0 4px 20px rgba(255,209,102,.3);
+}
+.lock-btn:hover{transform:scale(1.05);}
+.lock-stars{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+.lock-star{font-size:1.5rem;animation:twinkle 1.5s infinite;animation-delay:var(--d);}
+@keyframes twinkle{0%,100%{opacity:.4;}50%{opacity:1;}}
+
+/* ── LOGIN ── */
+#login-page{
+  position:fixed;inset:0;z-index:900;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;padding:20px;
+  background:radial-gradient(ellipse at 50% 0%,#1e2a50 0%,var(--bg) 65%);
+}
+.login-logo{font-family:'Fredoka One',cursive;font-size:2.6rem;color:var(--yellow);text-align:center;line-height:1;}
+.login-logo small{display:block;font-size:0.9rem;color:var(--muted);font-family:'Nunito',sans-serif;font-weight:600;margin-top:4px;}
+.player-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%;max-width:360px;}
+.p-card{
+  background:var(--s1);border:2px solid var(--border);border-radius:var(--r);
+  padding:18px 12px;text-align:center;cursor:pointer;transition:all .2s;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+}
+.p-card:active{transform:scale(.96);}
+.p-card.c0{border-color:#ff5572;} .p-card.c1{border-color:#4da6ff;}
+.p-card.c2{border-color:#3dd68c;} .p-card.c3{border-color:#ffd166;}
+.p-card.c4{border-color:#b57bee;} .p-card.c5{border-color:#ff8c42;}
+.p-ava{font-size:2.4rem;} .p-name{font-family:'Fredoka One',cursive;font-size:1rem;}
+.p-xp{font-size:0.7rem;color:var(--muted);}
+.p-add{
+  background:none;border:2px dashed var(--border);border-radius:var(--r);
+  padding:18px 12px;text-align:center;cursor:pointer;transition:all .2s;
+  font-size:1.8rem;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:4px;
+}
+.p-add span{font-size:0.72rem;font-family:'Nunito',sans-serif;}
+.p-add:hover{border-color:var(--yellow);color:var(--yellow);}
+
+/* ── APP LAYOUT ── */
+#app-page{position:fixed;inset:0;display:none;flex-direction:column;}
+#app-header{
+  background:var(--s1);border-bottom:1px solid var(--border);
+  padding:8px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+}
+.hdr-logo{font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--yellow);}
+.hdr-right{display:flex;align-items:center;gap:6px;}
+.hdr-xp{background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:0.72rem;font-weight:700;}
+.hdr-logout{background:none;border:1px solid var(--border);border-radius:8px;padding:4px 8px;color:var(--muted);cursor:pointer;font-size:0.7rem;font-family:'Nunito',sans-serif;}
+.app-body{flex:1;overflow:hidden;position:relative;}
+.page{position:absolute;inset:0;overflow-y:auto;padding:12px 14px 80px;display:none;}
+.page.active{display:block;}
+.bottom-nav{
+  background:rgba(13,17,23,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-top:1px solid var(--border);
+  display:flex;flex-shrink:0;overflow-x:auto;scrollbar-width:none;
+  padding:6px 8px 10px;gap:4px;
+}
+.bottom-nav::-webkit-scrollbar{display:none;}
+.nav-btn{
+  flex:0 0 auto;min-width:58px;display:flex;flex-direction:column;align-items:center;
+  gap:3px;padding:8px 8px 6px;background:none;border:none;
+  color:var(--muted);cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.62rem;font-weight:800;
+  transition:all .2s;position:relative;border-radius:14px;
+}
+.nav-btn:active{transform:scale(.93);}
+.nav-btn .ni{font-size:1.5rem;transition:transform .2s;}
+.nav-btn.active{color:var(--yellow);background:rgba(255,209,102,.12);}
+.nav-btn.active .ni{transform:scale(1.15);}
+.nav-btn .bdg{
+  position:absolute;top:4px;right:5px;background:var(--red);color:white;
+  border-radius:20px;padding:0 4px;font-size:0.55rem;font-weight:800;display:none;
+}
+.nav-btn .bdg.on{display:block;}
+
+/* ── COMMON COMPONENTS ── */
+.sec-hd{font-family:'Fredoka One',cursive;font-size:1.05rem;margin:12px 0 8px;display:flex;align-items:center;gap:6px;}
+.sec-hd:first-child{margin-top:0;}
+.card{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.card-p{padding:16px;}
+.sep{height:1px;background:var(--border);margin:12px 0;}
+.pill{background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:0.72rem;font-weight:700;cursor:pointer;transition:all .2s;display:inline-block;}
+.pill.on{background:var(--yellow);color:#0d1117;border-color:var(--yellow);}
+.pills{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+.xp-chip{border-radius:20px;padding:2px 8px;font-size:0.7rem;font-weight:800;}
+.xp-chip.pos{background:#1a3d2a;color:var(--green);}
+.xp-chip.neg{background:#3d1a1a;color:var(--red);}
+.empty-s{text-align:center;padding:28px 16px;color:var(--muted);}
+.empty-s .ei{font-size:2.8rem;margin-bottom:6px;}
+.empty-s p{font-size:0.82rem;}
+.label-s{font-size:0.72rem;color:var(--muted);font-weight:700;margin-bottom:3px;}
+
+/* USER BAR */
+.user-bar{
+  background:linear-gradient(135deg,var(--s1),var(--s2));
+  border:1px solid var(--border);border-radius:var(--r);
+  padding:12px;display:flex;align-items:center;gap:10px;margin-bottom:12px;
+}
+.ub-ava{font-size:2rem;} .ub-info{flex:1;min-width:0;}
+.ub-name{font-family:'Fredoka One',cursive;font-size:1rem;}
+.ub-role{font-size:0.68rem;color:var(--muted);margin-bottom:3px;}
+.xp-track{background:var(--s3);border-radius:20px;height:7px;overflow:hidden;}
+.xp-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--green),var(--teal));transition:width .5s;}
+.xp-txt{font-size:0.68rem;color:var(--muted);margin-top:2px;}
+.ub-pts{background:var(--s3);border-radius:10px;padding:8px 10px;text-align:center;}
+.ub-pts-val{font-family:'Fredoka One',cursive;font-size:1.2rem;color:var(--yellow);}
+.ub-pts-lbl{font-size:0.6rem;color:var(--muted);}
+
+/* GOAL BANNER */
+.goal-banner{
+  background:linear-gradient(135deg,#12201a,#1e2535);
+  border:1px solid var(--green);border-radius:var(--r);padding:12px;margin-bottom:12px;
+}
+.gb-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.gb-t{font-weight:700;font-size:0.82rem;} .gb-v{font-family:'Fredoka One',cursive;font-size:0.95rem;color:var(--green);}
+.gb-bar{background:var(--s3);border-radius:20px;height:9px;overflow:hidden;}
+.gb-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--green),var(--yellow));transition:width .5s;}
+.gb-sub{font-size:0.68rem;color:var(--muted);margin-top:3px;}
+
+/* INTERNET UNLOCK */
+.inet-banner{
+  background:linear-gradient(135deg,#201520,#1e2535);
+  border:1px solid var(--purple);border-radius:var(--r);padding:12px;margin-bottom:12px;
+}
+.inet-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.inet-t{font-weight:700;font-size:0.82rem;color:var(--purple);}
+.inet-bar-wrap{background:var(--s3);border-radius:20px;height:9px;overflow:hidden;}
+.inet-bar-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--purple),var(--pink));transition:width .5s;}
+.inet-lbl{font-size:0.68rem;color:var(--muted);margin-top:3px;}
+.inet-unlocked{display:flex;align-items:center;gap:8px;background:#1a1a3d;border-radius:10px;padding:10px;margin-top:8px;}
+.inet-unlocked .ii{font-size:1.6rem;}
+.inet-unlocked .it{font-weight:700;font-size:0.85rem;color:var(--blue);}
+.inet-unlocked .is{font-size:0.7rem;color:var(--muted);}
+
+/* SCOREBOARD */
+.sc-row{display:flex;align-items:center;gap:12px;background:var(--s2);border-radius:14px;padding:12px;margin-bottom:7px;border:1px solid var(--border);}
+.sc-rank{font-size:1.3rem;width:30px;text-align:center;flex-shrink:0;}
+.sc-ava{font-size:1.8rem;}
+.sc-name{flex:1;font-weight:800;font-size:0.9rem;}
+.sc-xp{font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--yellow);}
+
+/* TASKS */
+.task-row{
+  display:flex;align-items:flex-start;gap:10px;
+  background:var(--s2);border:1px solid var(--border);border-radius:14px;
+  padding:13px;margin-bottom:9px;transition:all .2s;
+}
+.task-row:active{transform:scale(.99);}
+.task-row.done{opacity:.45;}
+.task-ico{font-size:1.5rem;flex-shrink:0;margin-top:1px;}
+.task-body{flex:1;min-width:0;}
+.task-title{font-weight:800;font-size:0.85rem;}
+.task-desc{font-size:0.72rem;color:var(--muted);line-height:1.4;margin-top:1px;}
+.task-foot{display:flex;align-items:center;gap:5px;margin-top:5px;flex-wrap:wrap;}
+.diff-chip{background:var(--s3);border-radius:20px;padding:1px 7px;font-size:0.67rem;color:var(--muted);}
+.btn-done{
+  background:var(--green);color:#0d1117;border:none;border-radius:7px;
+  padding:4px 10px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;
+  font-size:0.75rem;flex-shrink:0;transition:transform .1s;
+}
+.btn-done:active{transform:scale(.95);}
+.btn-done:disabled{background:var(--s3);color:var(--muted);cursor:default;transform:none;}
+.btn-star{
+  background:var(--yellow);color:#0d1117;border:none;border-radius:7px;
+  padding:4px 8px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;
+  font-size:0.75rem;flex-shrink:0;transition:transform .1s;
+}
+.btn-star:active{transform:scale(.95);}
+.btn-star:disabled{background:var(--s3);color:var(--muted);cursor:default;transform:none;}
+
+/* TIMER CHALLENGE */
+.timer-card{
+  background:linear-gradient(135deg,var(--s1),var(--s2));
+  border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;
+}
+.tc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.tc-title{font-weight:800;font-size:0.9rem;}
+.tc-by{font-size:0.68rem;color:var(--muted);}
+.tc-timer{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--yellow);text-align:center;margin:8px 0;}
+.tc-timer.urgent{color:var(--red);animation:blink .5s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
+.tc-btns{display:flex;gap:6px;justify-content:center;}
+
+/* WISH / SECRET */
+.wish-card{
+  background:linear-gradient(135deg,#1a1040,#1e2535);
+  border:1px solid var(--purple);border-radius:var(--r);padding:14px;margin-bottom:10px;
+}
+.wish-locked{text-align:center;padding:10px;}
+.wish-locked .wi{font-size:2.5rem;margin-bottom:6px;}
+.wish-locked .wt{font-family:'Fredoka One',cursive;font-size:1rem;color:var(--purple);}
+.wish-locked .ws{font-size:0.75rem;color:var(--muted);margin-top:4px;}
+.wish-content{font-size:0.88rem;line-height:1.6;}
+.wish-mine{font-style:italic;color:var(--purple);}
+
+/* HOBBY / MUSIC */
+.hobby-card{
+  display:flex;align-items:flex-start;gap:10px;
+  background:var(--s2);border:1px solid var(--border);border-radius:var(--rs);
+  padding:10px;margin-bottom:7px;
+}
+.hobby-ava{font-size:1.4rem;flex-shrink:0;}
+.hobby-body{flex:1;}
+.hobby-name{font-weight:800;font-size:0.85rem;}
+.hobby-items{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;}
+.hobby-tag{background:var(--s3);border-radius:20px;padding:2px 9px;font-size:0.72rem;}
+.hobby-tag.music{background:#1a1040;color:var(--purple);}
+.hobby-tag.sport{background:#1a3040;color:var(--blue);}
+.hobby-tag.art{background:#1a3020;color:var(--green);}
+.hobby-tag.food{background:#3a2010;color:var(--orange);}
+.hobby-tag.place{background:#1a1a3a;color:var(--yellow);}
+
+/* VOTE */
+.vote-card{
+  background:var(--s1);border:1px solid var(--border);border-radius:var(--r);
+  padding:14px;margin-bottom:10px;
+}
+.vote-q{font-weight:800;font-size:0.9rem;margin-bottom:10px;}
+.vote-opts{display:flex;flex-direction:column;gap:6px;}
+.vote-opt{
+  display:flex;align-items:center;gap-8px;background:var(--s2);border-radius:8px;
+  padding:8px 10px;cursor:pointer;border:1.5px solid transparent;transition:all .2s;
+}
+.vote-opt:hover{border-color:var(--blue);}
+.vote-opt.voted{border-color:var(--green);background:#1a3d2a;}
+.vote-bar{background:var(--s3);border-radius:20px;height:6px;overflow:hidden;flex:1;margin:0 8px;}
+.vote-bar-fill{height:100%;border-radius:20px;background:var(--blue);transition:width .5s;}
+.vote-pct{font-size:0.7rem;font-weight:800;color:var(--muted);width:28px;text-align:right;}
+.vote-opt-label{font-size:0.82rem;font-weight:700;flex:1;}
+
+/* GALLERY */
+.gallery-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px;}
+.gal-item{border-radius:10px;overflow:hidden;background:var(--s2);border:1px solid var(--border);cursor:pointer;}
+.gal-img{width:100%;aspect-ratio:1;object-fit:cover;display:block;}
+.gal-caption{padding:6px 8px;}
+.gal-who{font-size:0.72rem;font-weight:700;}
+.gal-desc{font-size:0.68rem;color:var(--muted);}
+.gal-likes{font-size:0.7rem;color:var(--red);margin-top:2px;}
+
+/* CHAT */
+.chat-msgs{height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;padding:4px 0;}
+.cm{max-width:82%;}
+.cm.me{align-self:flex-end;} .cm.them{align-self:flex-start;}
+.cm-who{font-size:0.65rem;color:var(--muted);margin-bottom:1px;}
+.cm-bubble{padding:6px 10px;border-radius:12px;font-size:0.8rem;line-height:1.45;}
+.cm.me .cm-bubble{background:var(--blue);color:white;border-bottom-right-radius:3px;}
+.cm.them .cm-bubble{background:var(--s3);border-bottom-left-radius:3px;}
+.cm-bubble.sys{background:var(--s3);color:var(--muted);font-style:italic;border-radius:8px;font-size:0.72rem;}
+.chat-row{display:flex;gap:6px;margin-top:8px;}
+.chat-inp{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:8px 11px;color:var(--text);font-family:'Nunito',sans-serif;font-size:0.82rem;}
+.chat-inp:focus{outline:none;border-color:var(--blue);}
+.btn-send{background:var(--blue);border:none;border-radius:10px;padding:8px 13px;color:white;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.8rem;}
+
+/* BUTTONS */
+.btn{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:8px 16px;color:var(--text);cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:0.8rem;transition:all .15s;}
+.btn:hover{border-color:var(--muted);}
+.btn.primary{background:var(--blue);color:white;border-color:var(--blue);}
+.btn.success{background:var(--green);color:#0d1117;border-color:var(--green);}
+.btn.warning{background:var(--yellow);color:#0d1117;border-color:var(--yellow);}
+.btn.danger{background:var(--red);color:white;border-color:var(--red);}
+.btn.purple{background:var(--purple);color:white;border-color:var(--purple);}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+
+/* RULES */
+.rule-item{display:flex;align-items:flex-start;gap:8px;background:var(--s2);border-radius:var(--rs);border:1px solid var(--border);padding:10px;margin-bottom:7px;}
+.ri-ico{font-size:1.3rem;flex-shrink:0;}
+.ri-body{flex:1;}
+.ri-title{font-weight:800;font-size:0.82rem;}
+.ri-desc{font-size:0.7rem;color:var(--muted);margin-top:1px;}
+.ri-tag{display:inline-block;border-radius:20px;padding:1px 7px;font-size:0.62rem;font-weight:700;margin-top:3px;}
+.ri-tag.kids{background:#1a2a3d;color:var(--blue);}
+.ri-tag.parents{background:#2a1a3d;color:var(--purple);}
+.ri-tag.screen{background:#3d1a2a;color:var(--orange);}
+.ri-tag.hygiene{background:#1a3d2a;color:var(--green);}
+.ri-tag.school{background:#2a2a1a;color:var(--yellow);}
+.ri-xp{border-radius:20px;padding:3px 9px;font-size:0.75rem;font-weight:800;flex-shrink:0;}
+.ri-xp.pos{background:#1a3d2a;color:var(--green);}
+.ri-xp.neg{background:#3d1a1a;color:var(--red);}
+
+/* PENALTY TARGET */
+.tgt-sel{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+.tgt-pill{display:flex;align-items:center;gap:3px;background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:3px 9px;cursor:pointer;font-size:0.75rem;font-weight:700;}
+.tgt-pill.on{background:var(--blue);color:white;border-color:var(--blue);}
+
+/* PENALTY GRID */
+.pen-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.pen-card{background:var(--s2);border:2px solid var(--border);border-radius:16px;padding:13px 10px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;cursor:pointer;transition:all .2s;}
+.pen-card:active{transform:scale(.93);}
+.pen-card .pi{font-size:2rem;}
+.pen-card .pt{font-size:0.75rem;font-weight:800;line-height:1.3;}
+.pen-card .pp{font-size:0.75rem;font-weight:800;border-radius:20px;padding:3px 10px;margin-top:3px;}
+.pen-card.neg{border-color:#3d1a1a;} .pen-card.neg .pp{background:#3d1a1a;color:var(--red);}
+.pen-card.pos{border-color:#1a3d2a;} .pen-card.pos .pp{background:#1a3d2a;color:var(--green);}
+
+/* HYGIENE */
+.hyg-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:10px;}
+.hg-item{background:var(--s2);border:2px solid var(--border);border-radius:16px;padding:14px 10px;text-align:center;cursor:pointer;transition:all .2s;}
+.hg-item:active{transform:scale(.95);}
+.hg-item.done{background:#1a3d2a;border-color:var(--green);box-shadow:0 0 12px rgba(61,214,140,.2);}
+.hg-ico{font-size:2.1rem;margin-bottom:5px;}
+.hg-name{font-size:0.78rem;font-weight:800;}
+.hg-xp{font-size:0.7rem;color:var(--green);margin-top:2px;}
+.hg-streak{font-size:0.68rem;color:var(--muted);}
+
+/* SCREEN TIME */
+.st-card{background:var(--s2);border:1px solid var(--border);border-radius:var(--rs);padding:10px;margin-bottom:8px;}
+.st-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.st-label{font-weight:700;font-size:0.82rem;} .st-used{font-size:0.7rem;color:var(--muted);}
+.st-bar{background:var(--s3);border-radius:20px;height:7px;overflow:hidden;margin-bottom:5px;}
+.st-fill{height:100%;border-radius:20px;transition:width .5s;}
+.st-fill.ok{background:var(--green);} .st-fill.warn{background:var(--yellow);} .st-fill.over{background:var(--red);}
+.st-ctrl{display:flex;gap:5px;}
+.btn-tiny{background:var(--s3);border:none;border-radius:6px;padding:4px 9px;color:var(--text);cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.72rem;font-weight:700;}
+
+/* SCHOOL */
+.sc-row2{display:flex;align-items:center;gap:8px;background:var(--s2);border-radius:var(--rs);border:1px solid var(--border);padding:9px;margin-bottom:6px;}
+.sc-ava2{font-size:1.3rem;}
+.sc-info2{flex:1;}
+.sc-name2{font-weight:800;font-size:0.82rem;}
+.sc-sub2{font-size:0.68rem;color:var(--muted);}
+.sc-mark{font-family:'Fredoka One',cursive;font-size:1.1rem;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.m1{background:#1a3d2a;color:var(--green);} .m2{background:#1a3a20;color:#66ee88;}
+.m3{background:#2a2a1a;color:var(--yellow);} .m4{background:#3a2010;color:var(--orange);}
+.m5{background:#3d1a1a;color:var(--red);} .mn{background:#1a1040;color:var(--purple);}
+
+/* REWARDS */
+.rw-row{display:flex;align-items:center;gap:9px;background:var(--s2);border:1px solid var(--border);border-radius:var(--rs);padding:10px;margin-bottom:7px;}
+.rw-ico{font-size:1.6rem;flex-shrink:0;}
+.rw-body{flex:1;min-width:0;}
+.rw-title{font-weight:800;font-size:0.84rem;}
+.rw-desc{font-size:0.7rem;color:var(--muted);}
+.rw-cost{font-family:'Fredoka One',cursive;font-size:0.9rem;color:var(--yellow);flex-shrink:0;text-align:right;}
+.btn-rdm{background:var(--yellow);color:#0d1117;border:none;border-radius:7px;padding:3px 9px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.72rem;display:block;margin-top:3px;}
+.btn-rdm:disabled{background:var(--s3);color:var(--muted);cursor:default;}
+
+/* FEED */
+.feed-item{background:var(--s2);border-radius:var(--rs);border:1px solid var(--border);padding:9px;margin-bottom:7px;}
+.feed-item.praise{border-left:3px solid var(--green);}
+.feed-item.complaint{border-left:3px solid var(--red);}
+.feed-top{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;}
+.feed-who{font-weight:700;font-size:0.78rem;}
+.feed-time{font-size:0.65rem;color:var(--muted);}
+.feed-text{font-size:0.78rem;margin-top:4px;line-height:1.4;}
+.feed-badge{display:inline-block;border-radius:20px;padding:1px 7px;font-size:0.65rem;font-weight:700;}
+.feed-badge.praise{background:#1a3d2a;color:var(--green);}
+.feed-badge.complaint{background:#3d1a1a;color:var(--red);}
+
+/* DQ */
+.dq-box{
+  background:linear-gradient(135deg,#1a1040,#1e2535);
+  border:1px solid var(--blue);border-radius:var(--r);padding:14px;margin-bottom:14px;
+}
+.dq-lbl{font-size:0.65rem;color:var(--blue);font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;}
+.dq-q{font-family:'Fredoka One',cursive;font-size:1.05rem;margin-bottom:8px;}
+.dq-ans-list{display:flex;flex-direction:column;gap:5px;margin-bottom:8px;}
+.dq-ans{background:var(--s3);border-radius:8px;padding:7px 9px;font-size:0.78rem;display:flex;gap:6px;}
+.dq-ans-who{font-weight:800;flex-shrink:0;}
+.dq-ans-txt{flex:1;color:var(--muted);}
+.dq-inp-row{display:flex;gap:6px;}
+.dq-inp{flex:1;background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:7px 9px;color:var(--text);font-family:'Nunito',sans-serif;font-size:0.78rem;}
+.dq-inp:focus{outline:none;border-color:var(--blue);}
+
+/* MODALS */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:800;display:none;align-items:center;justify-content:center;padding:16px;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--s1);border:1px solid var(--border);border-radius:var(--r);padding:20px;width:100%;max-width:340px;max-height:88vh;overflow-y:auto;}
+.modal h3{font-family:'Fredoka One',cursive;font-size:1.2rem;margin-bottom:12px;}
+.m-inp{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:8px 11px;color:var(--text);font-family:'Nunito',sans-serif;font-size:0.85rem;margin-bottom:7px;}
+.m-inp:focus{outline:none;border-color:var(--blue);}
+.m-inp option{background:var(--s2);}
+.m-btns{display:flex;gap:7px;margin-top:4px;}
+.m-cancel{flex:1;background:var(--s2);color:var(--muted);border:none;border-radius:9px;padding:9px;font-family:'Nunito',sans-serif;font-weight:700;cursor:pointer;font-size:0.82rem;}
+.m-save{flex:1;background:var(--yellow);color:#0d1117;border:none;border-radius:9px;padding:9px;font-family:'Nunito',sans-serif;font-weight:800;cursor:pointer;font-size:0.82rem;}
+.ava-grid{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;justify-content:center;}
+.ava-opt{font-size:1.7rem;cursor:pointer;padding:5px;border-radius:7px;border:2px solid transparent;transition:all .15s;}
+.ava-opt.on{border-color:var(--yellow);background:var(--s2);}
+.role-row{display:flex;gap:7px;margin-bottom:8px;}
+.role-btn{flex:1;background:var(--s2);border:2px solid var(--border);border-radius:9px;padding:8px;text-align:center;cursor:pointer;font-weight:700;font-size:0.78rem;transition:all .15s;}
+.role-btn.on{border-color:var(--yellow);}
+textarea.m-inp{resize:none;min-height:72px;}
+
+/* TOAST */
+#toast{
+  position:fixed;bottom:74px;left:50%;transform:translateX(-50%) translateY(100px);
+  background:var(--green);color:#0d1117;padding:9px 18px;border-radius:30px;
+  font-weight:800;font-size:0.82rem;z-index:999;transition:transform .3s ease;
+  pointer-events:none;box-shadow:0 4px 18px rgba(0,0,0,.4);white-space:nowrap;
+}
+#toast.show{transform:translateX(-50%) translateY(0);}
+#toast.r{background:var(--red);color:white;}
+#toast.p{background:var(--purple);color:white;}
+
+/* PWA INSTALL HINT */
+#pwa-hint{
+  background:linear-gradient(135deg,#1a1a3d,#1e2535);
+  border:1px solid var(--blue);border-radius:var(--r);padding:12px;margin-bottom:12px;
+  display:none;
+}
+.pwa-inner{display:flex;align-items:center;gap:10px;}
+.pwa-txt{flex:1;}
+.pwa-txt strong{display:block;font-size:0.82rem;color:var(--blue);}
+.pwa-txt span{font-size:0.7rem;color:var(--muted);}
+
+/* CONFETTI */
+.confetti-piece{position:fixed;width:8px;height:8px;border-radius:2px;pointer-events:none;z-index:9999;animation:fall 1.5s ease-in forwards;}
+@keyframes fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(100vh) rotate(720deg);opacity:0;}}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- LOCK SCREEN -->
+<div id="lock-screen" style="display:none;">
+  <div class="lock-stars">
+    <div class="lock-star" style="--d:0s">⭐</div>
+    <div class="lock-star" style="--d:.3s">🌟</div>
+    <div class="lock-star" style="--d:.6s">✨</div>
+    <div class="lock-star" style="--d:.9s">⭐</div>
+    <div class="lock-star" style="--d:1.2s">🌟</div>
+  </div>
+  <div class="lock-icon">🔒</div>
+  <div class="lock-title">Internet čeká<br>na tvoje body!</div>
+  <div class="lock-sub" id="lock-sub">Splň úkoly a získej dostatek XP pro odemknutí internetu a aplikací.</div>
+  <div class="lock-progress">
+    <div class="lock-bar-wrap"><div class="lock-bar-fill" id="lock-bar" style="width:0%"></div></div>
+    <div class="lock-label" id="lock-label">0 / 100 XP</div>
+  </div>
+  <button class="lock-btn" onclick="hideLock()">Otevřít Rodinný Hub →</button>
+</div>
+
+<!-- MODALS -->
+<div class="modal-bg" id="m-addplayer">
+  <div class="modal">
+    <h3>🌟 Nový člen rodiny</h3>
+    <div class="label-s">Vyber avatar</div>
+    <div class="ava-grid" id="m-avagrid"></div>
+    <div class="label-s">Jméno</div>
+    <input class="m-inp" id="m-npname" placeholder="Jméno..." maxlength="14">
+    <div class="label-s">Role</div>
+    <div class="role-row">
+      <div class="role-btn on" id="rb-kid" onclick="selRole('kid')">👶 Dítě</div>
+      <div class="role-btn" id="rb-parent" onclick="selRole('parent')">👑 Rodič</div>
+    </div>
+    <div class="m-btns">
+      <button class="m-cancel" onclick="closeM('m-addplayer')">Zrušit</button>
+      <button class="m-save" onclick="savePlayer()">Přidat!</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-wish">
+  <div class="modal">
+    <h3>🌙 Můj tajný přání & Sen</h3>
+    <p style="font-size:0.78rem;color:var(--muted);margin-bottom:10px">Toto vidíš jen ty. Ostatní uvidí jen název snu, nikoliv obsah — dokud ho sám nezveřejníš.</p>
+    <div class="label-s">💫 Tajný žolík (co chceš opravdu hodně — bude stát 800 XP)</div>
+    <textarea class="m-inp" id="m-wish-joker" placeholder="Např: Nový telefon, výlet do Vídně, narozeninová večírek..."></textarea>
+    <div class="label-s">🌠 Velký sen (co by tvůj největší přání bylo — 2000 XP)</div>
+    <textarea class="m-inp" id="m-wish-dream" placeholder="Cokoli si dokážeš přát..."></textarea>
+    <div class="m-btns">
+      <button class="m-cancel" onclick="closeM('m-wish')">Zrušit</button>
+      <button class="m-save" onclick="saveWish()">Uložit</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-hobby">
+  <div class="modal">
+    <h3>🎯 Moje záliby & Hudba</h3>
+    <div class="label-s">🎵 Oblíbená hudba (kapely, žánry...)</div>
+    <input class="m-inp" id="m-music" placeholder="Např: Rock, Imagine Dragons, Metal...">
+    <div class="label-s">🏃 Sport & aktivity</div>
+    <input class="m-inp" id="m-sport" placeholder="Např: Fotbal, plavání, kolo...">
+    <div class="label-s">🎨 Kreativní záliby</div>
+    <input class="m-inp" id="m-art" placeholder="Např: Kreslení, Lego, vaření...">
+    <div class="label-s">🍕 Oblíbené jídlo</div>
+    <input class="m-inp" id="m-food" placeholder="Např: Pizza, sushi, svíčková...">
+    <div class="label-s">✈️ Kam chci jet (hlasování)</div>
+    <input class="m-inp" id="m-place" placeholder="Např: Moře, hory, Paříž...">
+    <div class="m-btns">
+      <button class="m-cancel" onclick="closeM('m-hobby')">Zrušit</button>
+      <button class="m-save" onclick="saveHobby()">Uložit</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-timer">
+  <div class="modal">
+    <h3>⏱️ Nová časovaná výzva</h3>
+    <div class="label-s">Komu</div>
+    <div class="tgt-sel" id="m-timer-tgt"></div>
+    <div class="label-s">Úkol</div>
+    <input class="m-inp" id="m-timer-task" placeholder="Ukliď pokoj, Udělej 20 dřepů...">
+    <div class="label-s">Čas (minuty)</div>
+    <input class="m-inp" type="number" id="m-timer-mins" value="10" min="1" max="120">
+    <div class="label-s">XP za splnění</div>
+    <input class="m-inp" type="number" id="m-timer-xp" value="40" min="5" max="200">
+    <div class="m-btns">
+      <button class="m-cancel" onclick="closeM('m-timer')">Zrušit</button>
+      <button class="m-save" onclick="saveTimerChallenge()">Spustit!</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-vote">
+  <div class="modal">
+    <h3>🗳️ Nové hlasování</h3>
+    <div class="label-s">Otázka / téma</div>
+    <input class="m-inp" id="m-vote-q" placeholder="Kam pojedeme na výlet?">
+    <div class="label-s">Možnosti (každá na nový řádek)</div>
+    <textarea class="m-inp" id="m-vote-opts" placeholder="Moře&#10;Hory&#10;Aquapark&#10;Cyklovýlet"></textarea>
+    <div class="m-btns">
+      <button class="m-cancel" onclick="closeM('m-vote')">Zrušit</button>
+      <button class="m-save" onclick="saveVote()">Vytvořit hlasování</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-school">
+  <div class="modal">
+    <h3>📚 Zapsat hodnocení</h3>
+    <div class="label-s">Kdo</div>
+    <div class="tgt-sel" id="m-school-tgt"></div>
+    <div class="label-s">Předmět</div>
+    <input class="m-inp" id="m-sc-subj" placeholder="Matematika, Čeština...">
+    <div class="label-s">Hodnocení</div>
+    <select class="m-inp" id="m-sc-mark">
+      <option value="1">1 – Výborný (+50 XP)</option>
+      <option value="2">2 – Chvalitebný (+30 XP)</option>
+      <option value="3">3 – Dobrý (+10 XP)</option>
+      <option value="4">4 – Dostatečný (-20 XP)</option>
+      <option value="5">5 – Nedostatečný (-50 XP)</option>
+      <option value="note">📓 Poznámka/napomenutí (-40 XP)</option>
+    </select>
+    <div class="label-s">Poznámka</div>
+    <input class="m-inp" id="m-sc-note" placeholder="Volitelný popis...">
+    <div class="m-btns">
+      <button class="m-cancel" onclick="closeM('m-school')">Zrušit</button>
+      <button class="m-save" onclick="saveSchool()">Uložit</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-feed">
+  <div class="modal">
+    <h3>📣 Pochvala nebo stížnost</h3>
+    <div class="role-row" id="m-feed-type">
+      <div class="role-btn on" id="ft-praise" onclick="selFeedType('praise')">👍 Pochvala</div>
+      <div class="role-btn" id="ft-complaint" onclick="selFeedType('complaint')">👎 Stížnost</div>
+    </div>
+    <div class="label-s">O kom</div>
+    <div class="tgt-sel" id="m-feed-tgt"></div>
+    <div class="label-s">Zpráva</div>
+    <textarea class="m-inp" id="m-feed-text" placeholder="Napiš..."></textarea>
+    <div class="m-btns">
+      <button class="m-cancel" onclick="closeM('m-feed')">Zrušit</button>
+      <button class="m-save" onclick="saveFeed()">Odeslat</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-dq">
+  <div class="modal">
+    <h3>❓ Otázka dne</h3>
+    <textarea class="m-inp" id="m-dq-text" placeholder="Co bys dělal/a kdybys měl/a superschopnost?"></textarea>
+    <div class="m-btns">
+      <button class="m-cancel" onclick="closeM('m-dq')">Zrušit</button>
+      <button class="m-save" onclick="saveDQ()">Přidat</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- WALLPAPER MODAL -->
+<div class="modal-bg" id="m-wallpaper">
+  <div class="modal" style="max-height:92vh;">
+    <h3>🎨 Tapeta & Téma</h3>
+    <div class="label-s" style="margin-bottom:8px">🌈 Barevné téma</div>
+    <div class="theme-row" id="theme-row"></div>
+    <div class="label-s" style="margin-bottom:8px">🖼️ Pozadí aplikace</div>
+    <div class="wp-grid" id="wp-grid"></div>
+    <div class="label-s" style="margin-bottom:6px">📷 Vlastní fotka jako tapeta</div>
+    <label class="btn success" style="display:block;text-align:center;padding:10px;cursor:pointer;border-radius:12px;margin-bottom:12px;">
+      📷 Nahrát vlastní fotku
+      <input type="file" accept="image/*" style="display:none" onchange="setCustomWallpaper(this)">
+    </label>
+    <button class="m-save" style="width:100%" onclick="closeM('m-wallpaper')">Hotovo ✓</button>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-page">
+  <div class="login-logo">🏠 Rodinný Hub<small>Kdo jsi dnes?</small></div>
+  <div class="player-grid" id="player-grid"></div>
+</div>
+
+<!-- APP -->
+<div id="app-page">
+  <div id="app-header">
+    <div class="hdr-logo">🏠 RodinHub</div>
+    <div class="hdr-right">
+      <div class="hdr-xp">⭐ <span id="h-famxp">0</span> XP</div>
+      <button class="hdr-logout" style="font-size:1rem;padding:4px 9px;border-color:var(--purple)" onclick="openM('m-wallpaper')" title="Změnit tapetu">🎨</button>
+      <button class="hdr-logout" onclick="logout()">← Odhlásit</button>
+    </div>
+  </div>
+  <div class="app-body">
+
+    <!-- HOME -->
+    <div class="page active" id="pg-home">
+      <div id="pwa-hint">
+        <div class="pwa-inner">
+          <div style="font-size:2rem">📱</div>
+          <div class="pwa-txt">
+            <strong>Přidat na plochu telefonu</strong>
+            <span>V prohlížeči klikni na "Sdílet" → "Přidat na plochu"</span>
+          </div>
+        </div>
+      </div>
+      <div class="user-bar">
+        <div class="ub-ava" id="h-ava">😀</div>
+        <div class="ub-info">
+          <div class="ub-name" id="h-name">Hráč</div>
+          <div class="ub-role" id="h-role">Člen rodiny</div>
+          <div class="xp-track"><div class="xp-fill" id="h-xpfill" style="width:0%"></div></div>
+          <div class="xp-txt" id="h-xptxt">0 XP</div>
+        </div>
+        <div class="ub-pts"><div class="ub-pts-val" id="h-pts">0</div><div class="ub-pts-lbl">XP</div></div>
+      </div>
+      <div id="h-inet-banner"></div>
+      <div class="goal-banner">
+        <div class="gb-row"><span class="gb-t">🎯 Rodinný cíl: Pizza párty!</span><span class="gb-v" id="gb-pct">0%</span></div>
+        <div class="gb-bar"><div class="gb-fill" id="gb-fill" style="width:0%"></div></div>
+        <div class="gb-sub" id="gb-sub">0 / 2000 bodů</div>
+      </div>
+      <div class="sec-hd">🏆 Žebříček rodiny</div>
+      <div id="scoreboard"></div>
+    </div>
+
+    <!-- TASKS -->
+    <div class="page" id="pg-tasks">
+      <div class="pills" id="task-pills"></div>
+      <div id="task-list"></div>
+    </div>
+
+    <!-- TIMER CHALLENGES -->
+    <div class="page" id="pg-timer">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="sec-hd" style="margin:0;">⏱️ Časované výzvy</div>
+        <button class="btn primary" style="padding:6px 12px;font-size:0.75rem;" onclick="openTimerModal()">+ Výzva</button>
+      </div>
+      <p style="font-size:0.75rem;color:var(--muted);margin-bottom:12px;">Rodič zadá úkol s časem. Splnění = body. Rodiče dostávají body za čas strávený s dětmi!</p>
+      <div id="timer-challenges"></div>
+      <div class="sep"></div>
+      <div class="sec-hd">⭐ Extra body pro rodiče</div>
+      <div id="parent-bonus-grid"></div>
+    </div>
+
+    <!-- HYGIENE + SCREEN -->
+    <div class="page" id="pg-hygiene">
+      <div class="sec-hd">🚿 Hygiena dnes</div>
+      <div class="hyg-grid" id="hyg-grid"></div>
+      <div class="sep"></div>
+      <div class="sec-hd">📺 Čas na obrazovkách</div>
+      <div id="screen-container"></div>
+      <p style="font-size:0.72rem;color:var(--muted);margin-top:8px;">Limity: TV max 2h, Internet max 1.5h. Za nepřekročení limitu +20 XP.</p>
+    </div>
+
+    <!-- SCHOOL -->
+    <div class="page" id="pg-school">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="sec-hd" style="margin:0;">📚 Škola</div>
+        <button class="btn primary" style="padding:6px 12px;font-size:0.75rem;" onclick="openSchoolModal()">+ Přidat</button>
+      </div>
+      <div id="school-list"></div>
+    </div>
+
+    <!-- PENALTIES -->
+    <div class="page" id="pg-penalty">
+      <div class="label-s" style="margin-bottom:5px;">Komu?</div>
+      <div class="tgt-sel" id="pen-tgt"></div>
+      <div class="pills" id="pen-pills"></div>
+      <div id="pen-grid-container"></div>
+    </div>
+
+    <!-- RULES -->
+    <div class="page" id="pg-rules">
+      <div class="pills" id="rules-pills"></div>
+      <div id="rules-list"></div>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="page" id="pg-quiz">
+      <div class="pills" id="quiz-pills"></div>
+      <div id="quiz-container"></div>
+    </div>
+
+    <!-- GAMES -->
+    <div class="page" id="pg-games">
+      <div class="pills" id="game-pills"></div>
+      <div id="game-container"></div>
+    </div>
+
+    <!-- HOBBIES -->
+    <div class="page" id="pg-hobbies">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="sec-hd" style="margin:0;">🎯 Záliby & Přání</div>
+        <button class="btn success" style="padding:6px 12px;font-size:0.75rem;" onclick="openHobbyModal()">✏️ Upravit moje</button>
+      </div>
+      <div class="pills">
+        <div class="pill on" onclick="filterHobbies('hobbies',this)">🎯 Záliby</div>
+        <div class="pill" onclick="filterHobbies('music',this)">🎵 Hudba</div>
+        <div class="pill" onclick="filterHobbies('vote',this)">🗳️ Hlasování</div>
+        <div class="pill" onclick="filterHobbies('wish',this)">🌙 Sny & Žolíky</div>
+      </div>
+      <div id="hobbies-container"></div>
+    </div>
+
+    <!-- GALLERY -->
+    <div class="page" id="pg-gallery">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="sec-hd" style="margin:0;">🎨 Galerie výtvorů</div>
+        <label class="btn success" style="padding:6px 12px;font-size:0.75rem;cursor:pointer;">
+          📷 Přidat <input type="file" accept="image/*" style="display:none" onchange="addGalleryPhoto(this)">
+        </label>
+      </div>
+      <div id="gallery-caption-row" style="display:none;margin-bottom:8px;">
+        <input class="m-inp" id="gal-caption-inp" placeholder="Popis výtvoru..." style="margin-bottom:6px;">
+        <div class="btn-row">
+          <button class="btn success" onclick="saveGalleryPhoto()">Uložit foto</button>
+          <button class="btn" onclick="cancelGalleryPhoto()">Zrušit</button>
+        </div>
+      </div>
+      <div class="gallery-grid" id="gallery-grid"></div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="page" id="pg-chat">
+      <div id="dq-container"></div>
+      <div class="sec-hd">💬 Rodinný chat</div>
+      <div class="card card-p">
+        <div class="chat-msgs" id="chat-msgs"></div>
+        <div class="chat-row">
+          <input class="chat-inp" id="chat-inp" placeholder="Napiš zprávu..." onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="btn-send" onclick="sendChat()">▶</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FEEDBACK -->
+    <div class="page" id="pg-feedback">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="sec-hd" style="margin:0;">📣 Pochvaly & Stížnosti</div>
+        <button class="btn success" style="padding:6px 12px;font-size:0.75rem;" onclick="openFeedModal()">+ Napsat</button>
+      </div>
+      <div class="pills" id="feed-pills"></div>
+      <div id="feed-list"></div>
+    </div>
+
+    <!-- REWARDS -->
+    <div class="page" id="pg-rewards">
+      <div class="user-bar">
+        <div class="ub-ava" id="rw-ava">😀</div>
+        <div class="ub-info">
+          <div class="ub-name" id="rw-name">Hráč</div>
+          <div class="xp-txt" id="rw-xp">0 XP</div>
+        </div>
+      </div>
+      <div class="sec-hd">🎁 Odměny</div>
+      <div id="reward-list"></div>
+      <div class="sep"></div>
+      <div id="secret-wish-section"></div>
+    </div>
+
+  </div>
+  <nav class="bottom-nav" id="bottom-nav">
+    <button class="nav-btn active" onclick="goPage('home',this)"><span class="ni">🏠</span>Domov</button>
+    <button class="nav-btn" onclick="goPage('tasks',this)"><span class="ni">📋</span>Úkoly</button>
+    <button class="nav-btn" onclick="goPage('timer',this)"><span class="ni">⏱️</span>Výzvy</button>
+    <button class="nav-btn" onclick="goPage('hygiene',this)"><span class="ni">🚿</span>Hygiena</button>
+    <button class="nav-btn" onclick="goPage('school',this)"><span class="ni">📚</span>Škola</button>
+    <button class="nav-btn" onclick="goPage('penalty',this)"><span class="ni">⚖️</span>Body</button>
+    <button class="nav-btn" onclick="goPage('rules',this)"><span class="ni">📏</span>Pravidla</button>
+    <button class="nav-btn" onclick="goPage('quiz',this)"><span class="ni">🧠</span>Kvíz</button>
+    <button class="nav-btn" onclick="goPage('games',this)"><span class="ni">🎮</span>Hry</button>
+    <button class="nav-btn" onclick="goPage('hobbies',this)"><span class="ni">🎯</span>Záliby</button>
+    <button class="nav-btn" onclick="goPage('gallery',this)"><span class="ni">🎨</span>Galerie</button>
+    <button class="nav-btn" onclick="goPage('chat',this)"><span class="ni">💬</span>Chat</button>
+    <button class="nav-btn" onclick="goPage('feedback',this)"><span class="ni">📣</span>Tabule</button>
+    <button class="nav-btn" onclick="goPage('rewards',this)"><span class="ni">🎁</span>Odměny</button>
+  </nav>
+</div>
+
+<script>
+// ═══════════════════════════
+// CONSTANTS
+// ═══════════════════════════
+const AVATARS=['😀','🦁','🐻','🦊','🐯','🐺','🐸','🐧','🦄','🐲','🧙','👑','🤖','🎃','⭐','🌈','🦋','🐬','🦖','🎸','🏆','🚀','🧸','🍕'];
+const PCOLORS=['c0','c1','c2','c3','c4','c5'];
+const INET_UNLOCK=100; // XP needed per day to unlock internet
+
+const TASKS=[
+  {id:'t1',cat:'home',icon:'🧹',title:'Zametat / luxovat',desc:'Zameť nebo vysaj podlahu v obýváku.',xp:25,diff:'⭐'},
+  {id:'t2',cat:'home',icon:'🍽️',title:'Umýt nádobí',desc:'Umyj všechno nádobí po jídle.',xp:30,diff:'⭐'},
+  {id:'t3',cat:'home',icon:'🛏️',title:'Ustlat postel',desc:'Uklid a urovnej postel do 9h.',xp:15,diff:'⭐'},
+  {id:'t4',cat:'home',icon:'🧺',title:'Složit prádlo',desc:'Složit vyprané prádlo na místě.',xp:20,diff:'⭐'},
+  {id:'t5',cat:'home',icon:'🗑️',title:'Vynést odpadky',desc:'Vynes smetí a vyměň pytel.',xp:20,diff:'⭐'},
+  {id:'t6',cat:'home',icon:'🌿',title:'Zalít kvítí',desc:'Zalij všechny pokojové rostliny.',xp:15,diff:'⭐'},
+  {id:'t7',cat:'fun',icon:'😂',title:'Vtip pro rodinu',desc:'Řekni rodině vtip. Musíš je rozesmát!',xp:15,diff:'⭐'},
+  {id:'t8',cat:'home',icon:'🧽',title:'Vyčistit koupelnu',desc:'Umyj záchod, umyvadlo a vanu/sprchu.',xp:45,diff:'⭐⭐'},
+  {id:'t9',cat:'home',icon:'🪟',title:'Umýt okna',desc:'Umyj 2 okna do lesku.',xp:40,diff:'⭐⭐'},
+  {id:'t10',cat:'home',icon:'🍳',title:'Uvařit snídani',desc:'Připrav snídani pro celou rodinu.',xp:40,diff:'⭐⭐'},
+  {id:'t11',cat:'fun',icon:'🏃',title:'Pohybová výzva',desc:'20 dřepů + 20 výskoků + 20 kliků.',xp:35,diff:'⭐⭐'},
+  {id:'t12',cat:'fun',icon:'📚',title:'Číst 30 minut',desc:'Čti knihu (ne telefon) 30 minut.',xp:30,diff:'⭐⭐'},
+  {id:'t13',cat:'home',icon:'🛒',title:'Nákupní seznam',desc:'Projdi lednici a napiš kompletní nákupní seznam.',xp:30,diff:'⭐⭐'},
+  {id:'t14',cat:'fun',icon:'✏️',title:'Kreativní tvorba',desc:'Nakresli nebo vyrobÍ něco a foť do galerie!',xp:35,diff:'⭐⭐'},
+  {id:'t15',cat:'home',icon:'🧽',title:'Luxovat celý byt',desc:'Vysaj nebo vytři všechny podlahy.',xp:50,diff:'⭐⭐'},
+  {id:'t16',cat:'home',icon:'🏡',title:'Velký úklid pokoje',desc:'Kompletní úklid — prach, luxování, vše na místo.',xp:70,diff:'⭐⭐⭐'},
+  {id:'t17',cat:'home',icon:'🌳',title:'Práce venku',desc:'Pokos trávu nebo hrabej listí 1 hodinu.',xp:80,diff:'⭐⭐⭐'},
+  {id:'t18',cat:'fun',icon:'🍕',title:'Uvařit večeři',desc:'Uvař celou večeři pro rodinu sám/sama.',xp:100,diff:'⭐⭐⭐'},
+  {id:'t19',cat:'fun',icon:'🎨',title:'Výzdobný projekt',desc:'Vyrob dekoraci pro dům (sezónní výzdoba, plakát...).',xp:60,diff:'⭐⭐⭐'},
+  {id:'t20',cat:'fun',icon:'🧩',title:'Naučit se novou dovednost',desc:'1 hodina učení nové věci (jazyk, hudba, kódování...).',xp:75,diff:'⭐⭐⭐'},
+  {id:'t21',cat:'home',icon:'🏗️',title:'Víkendový projekt',desc:'Pomáhej s velkým projektem v domácnosti celý den.',xp:200,diff:'⭐⭐⭐⭐'},
+  {id:'t22',cat:'fun',icon:'🌟',title:'Výzva týdne',desc:'Celý týden splňuj všechny denní úkoly.',xp:300,diff:'⭐⭐⭐⭐'},
+];
+
+const RULES=[
+  {tag:'kids',icon:'📱',title:'Telefon za večeří',desc:'Používání telefonu u stolu při jídle.',xp:-20,type:'neg'},
+  {tag:'kids',icon:'😤',title:'Odmlouvání',desc:'Hrubé odmlouvání rodičům.',xp:-30,type:'neg'},
+  {tag:'kids',icon:'🗣️',title:'Lhaní',desc:'Prokázané lhaní.',xp:-50,type:'neg'},
+  {tag:'kids',icon:'👊',title:'Fyzické napadení',desc:'Rvačka se sourozencem.',xp:-80,type:'neg'},
+  {tag:'screen',icon:'📺',title:'Překročení TV limitu',desc:'TV déle než povolený limit.',xp:-30,type:'neg'},
+  {tag:'screen',icon:'🌐',title:'Překročení internetu',desc:'Internet déle než 1.5h/den.',xp:-30,type:'neg'},
+  {tag:'kids',icon:'🌙',title:'Pozdě spát',desc:'Pozdní večerka bez dovolení.',xp:-25,type:'neg'},
+  {tag:'school',icon:'📓',title:'Poznámka ve škole',desc:'Napomenutí od učitele.',xp:-50,type:'neg'},
+  {tag:'hygiene',icon:'🦷',title:'Nečistění zubů',desc:'Vynechání čistění zubů.',xp:-15,type:'neg'},
+  {tag:'kids',icon:'⭐',title:'Pomohl bez vyzvání',desc:'Spontánní pomoc bez prosení.',xp:30,type:'pos'},
+  {tag:'school',icon:'🎉',title:'Výborná známka',desc:'Jedničky a pochvaly od učitele.',xp:40,type:'pos'},
+  {tag:'kids',icon:'🌟',title:'Mimořádný výkon',desc:'Výjimečně pěkný čin nebo snaha navíc.',xp:60,type:'pos'},
+  {tag:'hygiene',icon:'✨',title:'Týden hygieny v pořádku',desc:'Celý týden splněna hygiena každý den.',xp:50,type:'pos'},
+  {tag:'parents',icon:'😡',title:'Řvání na děti',desc:'Křičení nebo agresivní chování na děti.',xp:-40,type:'neg'},
+  {tag:'parents',icon:'🤬',title:'Sprosté slovo',desc:'Použití vulgarismu před dětmi.',xp:-30,type:'neg'},
+  {tag:'parents',icon:'⚔️',title:'Hádka před dětmi',desc:'Otevřená hádka partnerů před dětmi.',xp:-60,type:'neg'},
+  {tag:'parents',icon:'📱',title:'Ignorování dítěte (telefon)',desc:'Ignorování dítěte kvůli telefonu.',xp:-25,type:'neg'},
+  {tag:'parents',icon:'🎮',title:'Společná hra s dětmi',desc:'Věnoval/a čas společné hře.',xp:30,type:'pos'},
+  {tag:'parents',icon:'📖',title:'Čtení pohádky',desc:'Četl/a pohádku nebo příběh před spaním.',xp:20,type:'pos'},
+];
+
+const HYGIENE_ITEMS=[
+  {id:'h1',icon:'🦷',name:'Zuby ráno',xp:10},
+  {id:'h2',icon:'🦷',name:'Zuby večer',xp:10},
+  {id:'h3',icon:'🚿',name:'Sprcha/koupel',xp:20},
+  {id:'h4',icon:'✂️',name:'Nehty (týdně)',xp:15},
+  {id:'h5',icon:'🧴',name:'Mytí rukou',xp:5},
+  {id:'h6',icon:'👕',name:'Čisté oblečení',xp:10},
+  {id:'h7',icon:'🛏️',name:'Čistý pokoj',xp:15},
+  {id:'h8',icon:'💊',name:'Vitamíny',xp:10},
+];
+
+const REWARDS=[
+  {id:'r1',icon:'🎮',title:'15 min navíc na konzoli',desc:'Bonusový čas',cost:80},
+  {id:'r2',icon:'📺',title:'Film večer dle výběru',desc:'Ty vybíráš film',cost:100},
+  {id:'r3',icon:'🍦',title:'Zmrzlina',desc:'Výlet do cukrárny',cost:150},
+  {id:'r4',icon:'🧹',title:'Žolík: odpuštění úkolu',desc:'Jeden úkol = zrušen',cost:200},
+  {id:'r5',icon:'🎮',title:'Extra hodina na telefonu',desc:'Bonusová hodina',cost:150},
+  {id:'r6',icon:'🛒',title:'Malý nákup',desc:'Věc za max 200 Kč',cost:300},
+  {id:'r7',icon:'🍕',title:'Pizza párty',desc:'Celá rodina dělá pizzu',cost:500},
+  {id:'r8',icon:'🎬',title:'Kino s rodinou',desc:'Výběr film + kino',cost:400},
+  {id:'r9',icon:'🧁',title:'Pečení dortu',desc:'Pečení dle výběru',cost:250},
+  {id:'r10',icon:'🎢',title:'Aquapark',desc:'Celodenní odměna!',cost:1200},
+  {id:'r11',icon:'🏕️',title:'Víkendový výlet',desc:'Rodinný výlet',cost:2000},
+];
+
+const PARENT_BONUSES=[
+  {id:'pb1',icon:'🎮',title:'Hrál/a hry s dítětem',desc:'Společná hra 30+ minut',xp:40},
+  {id:'pb2',icon:'🚴',title:'Výlet s dítětem',desc:'Společná aktivita venku',xp:60},
+  {id:'pb3',icon:'📖',title:'Četl/a pohádku',desc:'Čtení před spaním',xp:20},
+  {id:'pb4',icon:'🎓',title:'Pomáhal/a s úkoly',desc:'Pomoc s domácími úkoly',xp:30},
+  {id:'pb5',icon:'🍳',title:'Vařil/a s dítětem',desc:'Společné vaření nebo pečení',xp:50},
+  {id:'pb6',icon:'💬',title:'Opravdový rozhovor',desc:'Srdcový rozhovor s dítětem 15+ min',xp:35},
+];
+
+const DEFAULT_DQS=[
+  'Co bys dělal/a, kdybys měl/a superschopnost?',
+  'Jaké je tvoje nejoblíbenější vzpomínka s rodinou?',
+  'Kdybys mohl/a jet kamkoliv, kam by to bylo?',
+  'Jaká 3 zvířata bys mohl/a mít jako mazlíčky?',
+  'Co tě dnes udělalo šťastným/šťastnou?',
+  'Kdybys měl/a milion korun, co bys udělal/a?',
+  'Jaká je tvoje nejoblíbenější rodinná tradice?',
+];
+
+// ═══════════════════════════
+// STATE
+// ═══════════════════════════
+let S={
+  players:[],msgs:[],completedTasks:{},hygieneLog:{},screenTime:{},
+  schoolMarks:[],feedItems:[],dqs:[],dqAnswers:{},gallery:[],
+  timerChallenges:[],votes:[],hobbies:{},wishes:{},
+  currentPlayer:null,
+};
+
+// ═══════════════════════════════════════════════════
+// FIREBASE — sdílená data pro celou rodinu v reálném čase
+// ═══════════════════════════════════════════════════
+const FB_CONFIG = {
+  apiKey: "AIzaSyACErXdMGH87xIAXF4FB0wlx5jCYbGSa80",
+  authDomain: "rodinny-hub.firebaseapp.com",
+  projectId: "rodinny-hub",
+  storageBucket: "rodinny-hub.firebasestorage.app",
+  messagingSenderId: "380919928528",
+  appId: "1:380919928528:web:5ab7a6158acec3da23b0d5"
+};
+
+let db_fb = null, _fbReady = false, _lastLocal = 0;
+
+function initFirebase() {
+  try {
+    firebase.initializeApp(FB_CONFIG);
+    db_fb = firebase.firestore();
+    _fbReady = true;
+    showFBBanner('connecting');
+    loadAll();
+  } catch(e) {
+    console.warn('Firebase init error:', e);
+    showFBBanner('error');
+    // Fallback: load from localStorage and show players
+    _loadFromLocalStorage();
+  }
+}
+
+function _loadFromLocalStorage() {
+  try {
+    const b = JSON.parse(localStorage.getItem('rh3_bk') || 'null');
+    if (b && b.players && b.players.length > 0) {
+      Object.assign(S, b);
+    } else {
+      S.players = [
+        {id:1,name:'Táta',avatar:'👑',xp:0,role:'parent',color:'c0'},
+        {id:2,name:'Máma',avatar:'⭐',xp:0,role:'parent',color:'c1'},
+      ];
+    }
+  } catch(e) {
+    S.players = [
+      {id:1,name:'Táta',avatar:'👑',xp:0,role:'parent',color:'c0'},
+      {id:2,name:'Máma',avatar:'⭐',xp:0,role:'parent',color:'c1'},
+    ];
+  }
+  renderLogin();
+}
+
+function showFBBanner(state) {
+  let b = document.getElementById('fb-b');
+  if (!b) { b = document.createElement('div'); b.id='fb-b'; b.style.cssText='position:fixed;top:0;left:0;right:0;text-align:center;padding:5px;font-size:0.72rem;font-weight:700;z-index:9999;transition:all .4s;'; document.body.appendChild(b); }
+  if (state==='ok') { b.style.background='var(--green)'; b.style.color='#0d1117'; b.textContent='✅ Připojeno — data sdílí celá rodina!'; setTimeout(()=>{b.style.opacity='0';setTimeout(()=>b.remove(),400);},3000); }
+  else if (state==='connecting') { b.style.background='var(--blue)'; b.style.color='white'; b.textContent='🔄 Připojuji se...'; }
+  else { b.style.background='var(--red)'; b.style.color='white'; b.textContent='⚠️ Offline — zkontroluj internet'; }
+}
+
+const DOC = 'rodina/hlavni';
+const MSGS = 'rodina/hlavni/messages';
+
+function saveAll() {
+  if (!_fbReady || !db_fb) { try{localStorage.setItem('rh3_bk',JSON.stringify(S));}catch(e){} return; }
+  _lastLocal = Date.now();
+  const d = {
+    players:S.players, completedTasks:S.completedTasks, hygieneLog:S.hygieneLog,
+    screenTime:S.screenTime, schoolMarks:S.schoolMarks.slice(-100),
+    feedItems:S.feedItems.slice(-100), dqs:S.dqs.slice(-50), dqAnswers:S.dqAnswers,
+    gallery:S.gallery.slice(-30), timerChallenges:S.timerChallenges,
+    votes:S.votes.slice(-20), hobbies:S.hobbies, wishes:S.wishes, ts:_lastLocal
+  };
+  db_fb.doc(DOC).set(d, {merge:true}).catch(e=>{ showFBBanner('error'); console.warn(e); });
+}
+
+function loadAll() {
+  if (!_fbReady||!db_fb) { _loadFromLocalStorage(); return; }
+  db_fb.doc(DOC).get().then(doc => {
+    if (doc.exists) {
+      const d = doc.data();
+      S.players=d.players||S.players; S.completedTasks=d.completedTasks||{};
+      S.hygieneLog=d.hygieneLog||{}; S.screenTime=d.screenTime||{};
+      S.schoolMarks=d.schoolMarks||[]; S.feedItems=d.feedItems||[];
+      S.dqs=d.dqs||[]; S.dqAnswers=d.dqAnswers||{};
+      S.gallery=d.gallery||[]; S.timerChallenges=d.timerChallenges||[];
+      S.votes=d.votes||[]; S.hobbies=d.hobbies||{}; S.wishes=d.wishes||{};
+    } else {
+      S.players=[{id:1,name:'Táta',avatar:'👑',xp:0,role:'parent',color:'c0'},{id:2,name:'Máma',avatar:'⭐',xp:0,role:'parent',color:'c1'}];
+      saveAll();
+    }
+    showFBBanner('ok');
+    renderLogin();
+    startRealtimeSync();
+    startChatSync();
+  }).catch(e=>{ showFBBanner('error'); console.warn(e); renderLogin(); });
+}
+
+function startRealtimeSync() {
+  db_fb.doc(DOC).onSnapshot(doc => {
+    if (!doc.exists) return;
+    const d = doc.data();
+    if (d.ts && d.ts <= _lastLocal + 1500) return;
+    const pid = S.currentPlayer?.id;
+    S.players=d.players||S.players; S.completedTasks=d.completedTasks||S.completedTasks;
+    S.hygieneLog=d.hygieneLog||S.hygieneLog; S.screenTime=d.screenTime||S.screenTime;
+    S.schoolMarks=d.schoolMarks||S.schoolMarks; S.feedItems=d.feedItems||S.feedItems;
+    S.dqs=d.dqs||S.dqs; S.dqAnswers=d.dqAnswers||S.dqAnswers;
+    S.gallery=d.gallery||S.gallery; S.timerChallenges=d.timerChallenges||S.timerChallenges;
+    S.votes=d.votes||S.votes; S.hobbies=d.hobbies||S.hobbies; S.wishes=d.wishes||S.wishes;
+    if (pid) S.currentPlayer = S.players.find(p=>p.id===pid)||S.currentPlayer;
+    if (S.currentPlayer) {
+      updateHdr(); renderScoreboard(); renderInetBanner(); renderLogin();
+      const a = document.querySelector('.page.active');
+      if (a) {
+        const id = a.id.replace('pg-','');
+        if(id==='tasks')renderTasks(curTaskCat);
+        if(id==='hygiene'){renderHygiene();renderScreen();}
+        if(id==='school')renderSchool();
+        if(id==='feedback')renderFeed(curFeedFilter);
+        if(id==='hobbies')renderHobbies(curHobbyFilter);
+        if(id==='gallery')renderGallery();
+        if(id==='timer')renderTimers();
+        if(id==='rewards')renderRewards();
+        if(id==='penalty')renderPenalties(_penFilter);
+      }
+    }
+  }, e=>{ showFBBanner('error'); console.warn(e); });
+}
+
+function startChatSync() {
+  db_fb.collection(MSGS).orderBy('time','asc').limitToLast(150).onSnapshot(snap=>{
+    S.msgs = snap.docs.map(d=>d.data());
+    renderChat();
+  });
+}
+
+function addChatMsg(text, sender, name) {
+  const msg = {text, sender, name, time: Date.now()};
+  S.msgs.push(msg);
+  renderChat();
+  if (_fbReady && db_fb) db_fb.collection(MSGS).add(msg).catch(e=>console.warn(e));
+}
+
+function td(){return new Date().toDateString();}
+function fmtMin(m){const h=Math.floor(m/60);const mn=m%60;return h?h+'h '+mn+'min':mn+'min';}
+
+// ═══════════════════════════
+// LOCK SCREEN
+// ═══════════════════════════
+function checkLock(){
+  const p=S.currentPlayer;
+  if(!p)return;
+  const todayXP=getTodayXP(p.id);
+  if(todayXP<INET_UNLOCK){
+    document.getElementById('lock-screen').style.display='flex';
+    document.getElementById('lock-bar').style.width=(todayXP/INET_UNLOCK*100)+'%';
+    document.getElementById('lock-label').textContent=todayXP+' / '+INET_UNLOCK+' XP dnešní den';
+    document.getElementById('lock-sub').textContent='Ahoj '+p.name+'! Dnešní den: '+todayXP+' / '+INET_UNLOCK+' XP.\nSplň úkoly a hygienu pro odemknutí internetu!';
+  } else {
+    document.getElementById('lock-screen').style.display='none';
+  }
+}
+function hideLock(){document.getElementById('lock-screen').style.display='none';}
+
+function getTodayXP(pid){
+  const key=pid+'_'+td();
+  const tasksXP=(S.completedTasks[key]||[]).reduce((s,id)=>{const t=TASKS.find(x=>x.id===id);return s+(t?t.xp:0);},0);
+  const hygieneXP=(S.hygieneLog[key]||[]).reduce((s,id)=>{const h=HYGIENE_ITEMS.find(x=>x.id===id);return s+(h?h.xp:0);},0);
+  return tasksXP+hygieneXP;
+}
+
+// ═══════════════════════════
+// LOGIN
+// ═══════════════════════════
+function renderLogin(){
+  const g=document.getElementById('player-grid');
+  g.innerHTML='';
+  S.players.forEach((p,i)=>{
+    const d=document.createElement('div');
+    d.className=`p-card ${p.color||PCOLORS[i%6]}`;
+    d.innerHTML=`<div class="p-ava">${p.avatar}</div><div class="p-name">${p.name}</div><div class="p-xp">${p.role==='parent'?'👑':'👶'} · ⭐${p.xp}</div>`;
+    d.onclick=()=>loginAs(p.id);
+    g.appendChild(d);
+  });
+  if(S.players.length<6){
+    const d=document.createElement('div');
+    d.className='p-add';d.innerHTML='➕<span>Přidat člena</span>';
+    d.onclick=openAddPlayer;
+    g.appendChild(d);
+  }
+}
+function loginAs(id){
+  S.currentPlayer=S.players.find(p=>p.id===id);
+  document.getElementById('login-page').style.display='none';
+  document.getElementById('app-page').style.display='flex';
+  checkLock();
+  refreshAll();
+}
+function logout(){
+  S.currentPlayer=null;
+  document.getElementById('app-page').style.display='none';
+  document.getElementById('login-page').style.display='flex';
+  renderLogin();
+}
+
+function refreshAll(){
+  updateHdr();
+  renderScoreboard();
+  renderTasks('all');
+  renderTimers();
+  renderHygiene();
+  renderScreen();
+  renderSchool();
+  renderPenalties('all');
+  renderRules('all');
+  renderQuiz('world');
+  renderGame('dama');
+  renderHobbies('hobbies');
+  renderGallery();
+  renderChat();
+  renderDQ();
+  renderFeed('all');
+  renderRewards();
+  renderInetBanner();
+  // show PWA hint
+  if(!window.matchMedia('(display-mode: standalone)').matches){
+    document.getElementById('pwa-hint').style.display='block';
+  }
+}
+
+// ═══════════════════════════
+// ADD PLAYER
+// ═══════════════════════════
+let _ava=AVATARS[0],_role='kid';
+function openAddPlayer(){
+  _ava=AVATARS[0];_role='kid';
+  const g=document.getElementById('m-avagrid');
+  g.innerHTML=AVATARS.map(a=>`<div class="ava-opt${a===_ava?' on':''}" onclick="pickAva('${a}',this)">${a}</div>`).join('');
+  document.getElementById('m-npname').value='';
+  selRole('kid');
+  openM('m-addplayer');
+}
+function pickAva(a,el){_ava=a;document.querySelectorAll('.ava-opt').forEach(x=>x.classList.remove('on'));el.classList.add('on');}
+function selRole(r){_role=r;document.getElementById('rb-kid').classList.toggle('on',r==='kid');document.getElementById('rb-parent').classList.toggle('on',r==='parent');}
+function savePlayer(){
+  const name=document.getElementById('m-npname').value.trim();
+  if(!name){toast('Zadej jméno!','r');return;}
+  S.players.push({id:Date.now(),name,avatar:_ava,xp:0,role:_role,color:PCOLORS[S.players.length%6]});
+  saveAll();closeM('m-addplayer');renderLogin();toast('Vítej, '+name+'! 🎉');
+}
+
+// ═══════════════════════════
+// HELPERS
+// ═══════════════════════════
+function openM(id){document.getElementById(id).classList.add('open');}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.className=type;t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2400);
+}
+function addXP(pid,amount,msg){
+  const p=S.players.find(x=>x.id===pid);if(!p)return;
+  p.xp=Math.max(0,p.xp+amount);
+  if(p.id===S.currentPlayer?.id)S.currentPlayer=p;
+  saveAll();updateHdr();renderScoreboard();renderInetBanner();
+  if(msg)toast(msg,amount<0?'r':'');
+  if(amount>0)confetti();
+  checkLock();
+}
+function updateHdr(){
+  const p=S.currentPlayer;if(!p)return;
+  const tot=S.players.reduce((s,x)=>s+x.xp,0);
+  document.getElementById('h-famxp').textContent=tot;
+  document.getElementById('h-ava').textContent=p.avatar;
+  document.getElementById('h-name').textContent=p.name;
+  document.getElementById('h-role').textContent=p.role==='parent'?'👑 Rodič':'👶 Dítě';
+  document.getElementById('h-pts').textContent=p.xp;
+  document.getElementById('h-xpfill').style.width=(p.xp%200/200*100)+'%';
+  document.getElementById('h-xptxt').textContent=p.xp+' XP · Level '+(Math.floor(p.xp/200)+1);
+  document.getElementById('rw-ava').textContent=p.avatar;
+  document.getElementById('rw-name').textContent=p.name;
+  document.getElementById('rw-xp').textContent=p.xp+' XP k dispozici';
+  const pct=Math.min(100,Math.round(tot/2000*100));
+  document.getElementById('gb-fill').style.width=pct+'%';
+  document.getElementById('gb-pct').textContent=pct+'%';
+  document.getElementById('gb-sub').textContent=tot+' / 2000 bodů';
+}
+function renderInetBanner(){
+  const p=S.currentPlayer;if(!p)return;
+  const todayXP=getTodayXP(p.id);
+  const unlocked=todayXP>=INET_UNLOCK;
+  const pct=Math.min(100,todayXP/INET_UNLOCK*100);
+  document.getElementById('h-inet-banner').innerHTML=`
+    <div class="inet-banner">
+      <div class="inet-row"><span class="inet-t">🔒 Internet dnes</span><span style="font-size:0.72rem;color:var(--muted)">${todayXP} / ${INET_UNLOCK} XP</span></div>
+      <div class="inet-bar-wrap"><div class="inet-bar-fill" style="width:${pct}%"></div></div>
+      ${unlocked?`<div class="inet-unlocked"><div class="ii">🌐</div><div><div class="it">Internet odemknut!</div><div class="is">Dnes jsi splnil/a denní cíl.</div></div></div>`:
+      `<div class="inet-lbl">Splň ještě ${INET_UNLOCK-todayXP} XP pro odemknutí internetu</div>`}
+    </div>`;
+}
+function renderScoreboard(){
+  const sorted=[...S.players].sort((a,b)=>b.xp-a.xp);
+  const m=['🥇','🥈','🥉'];
+  document.getElementById('scoreboard').innerHTML=sorted.map((p,i)=>`
+    <div class="sc-row">
+      <div class="sc-rank">${m[i]||'#'+(i+1)}</div>
+      <div class="sc-ava">${p.avatar}</div>
+      <div class="sc-name">${p.name}<br><small style="color:var(--muted);font-size:0.67rem">${p.role==='parent'?'👑 Rodič':'👶 Dítě'}</small></div>
+      <div class="sc-xp">${p.xp} XP</div>
+    </div>`).join('');
+}
+function goPage(name,btn){
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(x=>x.classList.remove('active'));
+  document.getElementById('pg-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='chat'){renderChat();renderDQ();}
+  if(name==='rewards'){updateHdr();renderRewards();renderSecretWishes();}
+  if(name==='feedback')renderFeed(curFeedFilter);
+  if(name==='school')renderSchool();
+  if(name==='hobbies')renderHobbies(curHobbyFilter);
+}
+function confetti(){
+  const colors=['#ffd166','#ff5572','#3dd68c','#4da6ff','#b57bee','#ff8c42'];
+  for(let i=0;i<18;i++){
+    const c=document.createElement('div');
+    c.className='confetti-piece';
+    c.style.cssText=`left:${20+Math.random()*60}%;top:-10px;background:${colors[i%6]};animation-delay:${Math.random()*.5}s;transform:rotate(${Math.random()*360}deg);`;
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),2000);
+  }
+}
+
+// ═══════════════════════════
+// TASKS
+// ═══════════════════════════
+let curTaskCat='all';
+function renderTasks(cat){
+  curTaskCat=cat||'all';
+  const p=S.currentPlayer;
+  const key=p.id+'_'+td();
+  const done=S.completedTasks[key]||[];
+  const cats=[{k:'all',l:'Vše'},{k:'home',l:'🏠 Domácnost'},{k:'fun',l:'🎯 Aktivity'}];
+  document.getElementById('task-pills').innerHTML=cats.map(c=>`<div class="pill${c.k===curTaskCat?' on':''}" onclick="renderTasks('${c.k}')">${c.l}</div>`).join('');
+  const items=curTaskCat==='all'?TASKS:TASKS.filter(t=>t.cat===curTaskCat);
+  document.getElementById('task-list').innerHTML=items.map(t=>`
+    <div class="task-row${done.includes(t.id)?' done':''}">
+      <div class="task-ico">${t.icon}</div>
+      <div class="task-body">
+        <div class="task-title">${t.title}</div>
+        <div class="task-desc">${t.desc}</div>
+        <div class="task-foot">
+          <span class="xp-chip pos">+${t.xp} XP</span>
+          <span class="diff-chip">${t.diff}</span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">
+        <button class="btn-done" ${done.includes(t.id)?'disabled':''} onclick="completeTask('${t.id}',${t.xp},false)">
+          ${done.includes(t.id)?'✅':'Hotovo'}
+        </button>
+        ${!done.includes(t.id)?`<button class="btn-star" onclick="completeTask('${t.id}',${t.xp},true)">⭐ Super</button>`:''}
+      </div>
+    </div>`).join('');
+}
+function completeTask(id,xp,extra){
+  const p=S.currentPlayer;const key=p.id+'_'+td();
+  if(!S.completedTasks[key])S.completedTasks[key]=[];
+  S.completedTasks[key].push(id);
+  const bonus=extra?Math.round(xp*.5):0;
+  const total=xp+bonus;
+  addXP(p.id,total,'+'+total+' XP'+(extra?' (výjimečné splnění! +50%)':'')+'⭐');
+  renderTasks(curTaskCat);
+  renderInetBanner();
+  const task=TASKS.find(t=>t.id===id);
+  addChatMsg(p.name+' splnil/a: '+task.title+(extra?' 🌟 (výjimečně!)':' ✅'),p.id,'system');
+  saveAll();
+}
+
+// ═══════════════════════════
+// TIMER CHALLENGES
+// ═══════════════════════════
+let timerTarget=null;
+function openTimerModal(){
+  timerTarget=null;
+  document.getElementById('m-timer-tgt').innerHTML=S.players.map(p=>`
+    <div class="tgt-pill${timerTarget===p.id?' on':''}" onclick="selTimerTgt(${p.id},this)"><span>${p.avatar}</span>${p.name}</div>`).join('');
+  openM('m-timer');
+}
+function selTimerTgt(id,el){timerTarget=id;document.querySelectorAll('#m-timer-tgt .tgt-pill').forEach(x=>x.classList.remove('on'));el.classList.add('on');}
+function saveTimerChallenge(){
+  if(!timerTarget){toast('Vyber komu','r');return;}
+  const task=document.getElementById('m-timer-task').value.trim();
+  if(!task){toast('Zadej úkol','r');return;}
+  const mins=parseInt(document.getElementById('m-timer-mins').value)||10;
+  const xp=parseInt(document.getElementById('m-timer-xp').value)||40;
+  const target=S.players.find(p=>p.id===timerTarget);
+  S.timerChallenges.push({
+    id:Date.now(),targetId:timerTarget,targetName:target.name,targetAva:target.avatar,
+    byName:S.currentPlayer.name,task,mins,xp,
+    deadline:Date.now()+mins*60000,done:false,started:true,
+  });
+  saveAll();closeM('m-timer');renderTimers();
+  addChatMsg('⏱️ '+S.currentPlayer.name+' zadal/a výzvu pro '+target.name+': "'+task+'" — '+mins+' min',S.currentPlayer.id,'system');
+  toast('Výzva spuštěna! ⏱️');
+}
+let timerInterval=null;
+function renderTimers(){
+  if(timerInterval){clearInterval(timerInterval);timerInterval=null;}
+  const active=S.timerChallenges.filter(c=>!c.done);
+  const done=S.timerChallenges.filter(c=>c.done).slice(-5);
+  let html='';
+  if(active.length===0)html+=`<div class="empty-s"><div class="ei">⏱️</div><p>Žádné aktivní výzvy.<br>Rodič může zadat novou!</p></div>`;
+  active.forEach(c=>{
+    const left=Math.max(0,c.deadline-Date.now());
+    const mins=Math.floor(left/60000);const secs=Math.floor((left%60000)/1000);
+    const urgent=left<60000;
+    html+=`<div class="timer-card" id="tc-${c.id}">
+      <div class="tc-header">
+        <div><div class="tc-title">${c.targetAva} ${c.targetName}: ${c.task}</div><div class="tc-by">Zadal/a: ${c.byName} · ${c.xp} XP</div></div>
+        ${left===0?`<span class="xp-chip neg">Čas!</span>`:''}
+      </div>
+      <div class="tc-timer${urgent?' urgent':''}" id="tct-${c.id}">${left===0?'⏰ ČAS VYPRŠEL!':mins+':'+String(secs).padStart(2,'0')}</div>
+      <div class="tc-btns">
+        ${c.targetId===S.currentPlayer.id&&left>0?`<button class="btn success" onclick="completeTimer(${c.id})">✅ Hotovo!</button>`:''}
+        ${S.currentPlayer.role==='parent'?`<button class="btn danger" onclick="cancelTimer(${c.id})">🗑️ Zrušit</button>`:''}
+      </div>
+    </div>`;
+  });
+  // parent bonus
+  document.getElementById('timer-challenges').innerHTML=html;
+  document.getElementById('parent-bonus-grid').innerHTML=`<div class="pen-grid">${PARENT_BONUSES.map(pb=>`
+    <div class="pen-card pos" onclick="applyParentBonus(${pb.xp},'${pb.title}')">
+      <div class="pi">${pb.icon}</div>
+      <div class="pt">${pb.title}</div>
+      <div class="pp">+${pb.xp} XP</div>
+    </div>`).join('')}</div>`;
+  // live countdown
+  timerInterval=setInterval(()=>{
+    S.timerChallenges.filter(c=>!c.done).forEach(c=>{
+      const el=document.getElementById('tct-'+c.id);if(!el)return;
+      const left=Math.max(0,c.deadline-Date.now());
+      const mins=Math.floor(left/60000);const secs=Math.floor((left%60000)/1000);
+      el.textContent=left===0?'⏰ ČAS VYPRŠEL!':mins+':'+String(secs).padStart(2,'0');
+      el.className='tc-timer'+(left<60000?' urgent':'');
+    });
+  },1000);
+}
+function completeTimer(id){
+  const c=S.timerChallenges.find(x=>x.id===id);if(!c)return;
+  const timeLeft=c.deadline-Date.now();
+  const bonus=timeLeft>0?Math.round(c.xp*.3):0;
+  c.done=true;
+  addXP(c.targetId,c.xp+bonus,'+'+(c.xp+bonus)+' XP za splněnou výzvu!'+(bonus?` (+${bonus} bonus za čas)`:''));
+  saveAll();renderTimers();
+  addChatMsg(c.targetName+' splnil/a výzvu: "'+c.task+'" ✅',S.currentPlayer.id,'system');
+}
+function cancelTimer(id){
+  S.timerChallenges=S.timerChallenges.filter(x=>x.id!==id);
+  saveAll();renderTimers();
+}
+function applyParentBonus(xp,title){
+  if(S.currentPlayer.role!=='parent'){toast('Jen pro rodiče!','r');return;}
+  addXP(S.currentPlayer.id,xp,'+'+xp+' XP — '+title+' 👨‍👩‍👧');
+}
+
+// ═══════════════════════════
+// HYGIENE
+// ═══════════════════════════
+function renderHygiene(){
+  const p=S.currentPlayer;const key=p.id+'_'+td();const done=S.hygieneLog[key]||[];
+  document.getElementById('hyg-grid').innerHTML=HYGIENE_ITEMS.map(h=>`
+    <div class="hg-item${done.includes(h.id)?' done':''}" onclick="toggleHyg('${h.id}',${h.xp})">
+      <div class="hg-ico">${h.icon}</div>
+      <div class="hg-name">${h.name}</div>
+      <div class="hg-xp">${done.includes(h.id)?'✅':'+'+h.xp+' XP'}</div>
+      <div class="hg-streak">${getStreak(p.id,h.id)}🔥 dní</div>
+    </div>`).join('');
+}
+function toggleHyg(hid,xp){
+  const p=S.currentPlayer;const key=p.id+'_'+td();
+  if(!S.hygieneLog[key])S.hygieneLog[key]=[];
+  if(S.hygieneLog[key].includes(hid)){S.hygieneLog[key]=S.hygieneLog[key].filter(x=>x!==hid);addXP(p.id,-xp);}
+  else{S.hygieneLog[key].push(hid);addXP(p.id,xp,'+'+xp+' XP hygiena!');}
+  saveAll();renderHygiene();renderInetBanner();
+}
+function getStreak(pid,hid){
+  let s=0;const now=new Date();
+  for(let i=0;i<30;i++){const d=new Date(now);d.setDate(now.getDate()-i);const k=pid+'_'+d.toDateString();if(S.hygieneLog[k]?.includes(hid))s++;else break;}
+  return s;
+}
+
+// ═══════════════════════════
+// SCREEN TIME
+// ═══════════════════════════
+function renderScreen(){
+  const p=S.currentPlayer;const key=p.id+'_'+td();const st=S.screenTime[key]||{tv:0,net:0};
+  document.getElementById('screen-container').innerHTML=
+    mkST('tv','📺 Televize',st.tv,120)+mkST('net','🌐 Internet/hry',st.net,90);
+}
+function mkST(type,label,used,limit){
+  const pct=Math.min(100,used/limit*100);
+  const cls=pct>=100?'over':pct>=80?'warn':'ok';
+  return `<div class="st-card">
+    <div class="st-row"><div class="st-label">${label}</div><div class="st-used">${fmtMin(used)} / ${fmtMin(limit)}</div></div>
+    <div class="st-bar"><div class="st-fill ${cls}" style="width:${pct}%"></div></div>
+    <div class="st-ctrl">
+      <button class="btn-tiny" onclick="addST('${type}',15)">+15min</button>
+      <button class="btn-tiny" onclick="addST('${type}',30)">+30min</button>
+      <button class="btn-tiny" onclick="addST('${type}',-15)">-15min</button>
+      ${pct>=100?`<span class="xp-chip neg" style="margin-left:4px">Limit!</span>`:''}
+    </div>
+  </div>`;
+}
+function addST(type,mins){
+  const p=S.currentPlayer;const key=p.id+'_'+td();
+  if(!S.screenTime[key])S.screenTime[key]={tv:0,net:0};
+  S.screenTime[key][type]=Math.max(0,(S.screenTime[key][type]||0)+mins);
+  const limit=type==='tv'?120:90;
+  if(mins>0&&S.screenTime[key][type]>limit){addXP(p.id,-30,'⚠️ Překročen limit! -30 XP','r');}
+  saveAll();renderScreen();
+}
+
+// ═══════════════════════════
+// SCHOOL
+// ═══════════════════════════
+let _schoolTarget=null;
+function openSchoolModal(){
+  _schoolTarget=null;
+  document.getElementById('m-school-tgt').innerHTML=S.players.filter(p=>p.role==='kid').map(p=>`
+    <div class="tgt-pill" onclick="selSchoolTgt(${p.id},this)"><span>${p.avatar}</span>${p.name}</div>`).join('');
+  document.getElementById('m-sc-subj').value='';
+  document.getElementById('m-sc-mark').value='1';
+  document.getElementById('m-sc-note').value='';
+  openM('m-school');
+}
+function selSchoolTgt(id,el){_schoolTarget=id;document.querySelectorAll('#m-school-tgt .tgt-pill').forEach(x=>x.classList.remove('on'));el.classList.add('on');}
+function saveSchool(){
+  if(!_schoolTarget){toast('Vyber dítě','r');return;}
+  const subj=document.getElementById('m-sc-subj').value.trim();if(!subj){toast('Zadej předmět','r');return;}
+  const mark=document.getElementById('m-sc-mark').value;
+  const note=document.getElementById('m-sc-note').value.trim();
+  const xpMap={'1':50,'2':30,'3':10,'4':-20,'5':-50,'note':-40};
+  const xp=xpMap[mark]||0;
+  const target=S.players.find(p=>p.id===_schoolTarget);
+  S.schoolMarks.push({pid:_schoolTarget,pname:target.name,pava:target.avatar,subj,mark,note,xp,date:Date.now()});
+  if(xp)addXP(_schoolTarget,xp,(xp>0?'+':'')+xp+' XP za '+subj);
+  saveAll();closeM('m-school');renderSchool();
+  addChatMsg(target.name+' dostal/a z '+subj+': '+mark+(xp?' ('+xp+' XP)':''),S.currentPlayer.id,'system');
+}
+function renderSchool(){
+  const list=[...S.schoolMarks].sort((a,b)=>b.date-a.date);
+  const mc={1:'m1',2:'m2',3:'m3',4:'m4',5:'m5',note:'mn'};
+  document.getElementById('school-list').innerHTML=list.length?list.map(m=>`
+    <div class="sc-row2">
+      <div class="sc-ava2">${m.pava}</div>
+      <div class="sc-info2">
+        <div class="sc-name2">${m.pname} – ${m.subj}</div>
+        <div class="sc-sub2">${m.note||''} · ${new Date(m.date).toLocaleDateString('cs')}</div>
+        ${m.xp?`<span class="xp-chip ${m.xp>0?'pos':'neg'}" style="display:inline-block;margin-top:2px">${m.xp>0?'+':''}${m.xp} XP</span>`:''}
+      </div>
+      <div class="sc-mark ${mc[m.mark]||'mn'}">${m.mark==='note'?'📓':m.mark}</div>
+    </div>`).join(''):`<div class="empty-s"><div class="ei">📚</div><p>Zatím žádné záznamy</p></div>`;
+}
+
+// ═══════════════════════════
+// PENALTIES
+// ═══════════════════════════
+let _penTarget=null,_penFilter='all';
+function renderPenalties(f){
+  _penFilter=f;
+  document.getElementById('pen-tgt').innerHTML=S.players.map(p=>`
+    <div class="tgt-pill${_penTarget===p.id?' on':''}" onclick="selPenTgt(${p.id},this)"><span>${p.avatar}</span>${p.name}</div>`).join('');
+  const filters=[{k:'all',l:'Vše'},{k:'kids',l:'Děti'},{k:'parents',l:'Rodiče'},{k:'pos',l:'Pochvaly'},{k:'neg',l:'Postihy'}];
+  document.getElementById('pen-pills').innerHTML=filters.map(f=>`<div class="pill${f.k===_penFilter?' on':''}" onclick="renderPenalties('${f.k}')">${f.l}</div>`).join('');
+  let items=RULES;
+  if(_penFilter==='kids')items=items.filter(r=>['kids','hygiene','school','screen'].includes(r.tag));
+  else if(_penFilter==='parents')items=items.filter(r=>r.tag==='parents');
+  else if(_penFilter==='pos')items=items.filter(r=>r.type==='pos');
+  else if(_penFilter==='neg')items=items.filter(r=>r.type==='neg');
+  document.getElementById('pen-grid-container').innerHTML=`<div class="pen-grid">${items.map(r=>`
+    <div class="pen-card ${r.type}" onclick="applyRule(${r.xp},'${r.title.replace(/'/g,"\\'")}')">
+      <div class="pi">${r.icon}</div><div class="pt">${r.title}</div>
+      <div class="pp">${r.xp>0?'+':''}${r.xp} XP</div>
+    </div>`).join('')}</div>`;
+}
+function selPenTgt(id,el){_penTarget=id;document.querySelectorAll('#pen-tgt .tgt-pill').forEach(x=>x.classList.remove('on'));el.classList.add('on');}
+function applyRule(xp,title){
+  if(!_penTarget){toast('Vyber komu!','r');return;}
+  const target=S.players.find(p=>p.id===_penTarget);
+  addXP(_penTarget,xp,(xp>0?'+':'')+xp+' XP ('+title+')');
+  addChatMsg(S.currentPlayer.name+' '+(xp>0?'přidal/a':'odebral/a')+' bodů hráči '+target.name+': '+title,S.currentPlayer.id,'system');
+}
+
+// ═══════════════════════════
+// RULES
+// ═══════════════════════════
+function renderRules(f){
+  const filters=[{k:'all',l:'Vše'},{k:'kids',l:'Děti'},{k:'parents',l:'Rodiče'},{k:'screen',l:'Obrazovky'},{k:'hygiene',l:'Hygiena'},{k:'school',l:'Škola'}];
+  document.getElementById('rules-pills').innerHTML=filters.map(x=>`<div class="pill${x.k===f?' on':''}" onclick="renderRules('${x.k}')">${x.l}</div>`).join('');
+  let items=RULES;if(f&&f!=='all')items=items.filter(r=>r.tag===f);
+  const tagLbl={kids:'👶 Děti',parents:'👑 Rodiče',screen:'📺 Obrazovky',hygiene:'🚿 Hygiena',school:'📚 Škola'};
+  document.getElementById('rules-list').innerHTML=items.map(r=>`
+    <div class="rule-item">
+      <div class="ri-ico">${r.icon}</div>
+      <div class="ri-body">
+        <div class="ri-title">${r.title}</div>
+        <div class="ri-desc">${r.desc}</div>
+        <span class="ri-tag ${r.tag}">${tagLbl[r.tag]||r.tag}</span>
+      </div>
+      <div class="ri-xp ${r.type}">${r.xp>0?'+':''}${r.xp} XP</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════
+// QUIZ
+// ═══════════════════════════
+const QWORLD=[
+  {q:'Která planeta je nejblíže Slunci?',opts:['Mars','Venuše','Merkur','Země'],ans:2,xp:20},
+  {q:'Kolik nohou má pavouk?',opts:['6','8','10','4'],ans:1,xp:15},
+  {q:'Jak se jmenuje hlavní město Francie?',opts:['Madrid','Berlín','Řím','Paříž'],ans:3,xp:15},
+  {q:'Kolik planet je ve sluneční soustavě?',opts:['7','8','9','10'],ans:1,xp:20},
+  {q:'Která barva vznikne smícháním modré a žluté?',opts:['Červená','Fialová','Zelená','Oranžová'],ans:2,xp:15},
+  {q:'Jak se jmenuje největší oceán?',opts:['Atlantský','Indický','Arktický','Tichý'],ans:3,xp:20},
+  {q:'Z čeho se vyrábí čokoláda?',opts:['Kakaové boby','Cukrová třtina','Vanilka','Kávová zrna'],ans:0,xp:15},
+  {q:'Kolik je 7 × 8?',opts:['54','56','58','62'],ans:1,xp:15},
+  {q:'Která zvíře je nejrychlejší?',opts:['Lev','Gepard','Kůň','Antilopa'],ans:1,xp:20},
+  {q:'Co je fotosyntéza?',opts:['Dýchání rostlin','Výroba kyslíku z kamene','Přeměna světla na živiny','Rozmnožování rostlin'],ans:2,xp:25},
+  {q:'Jak se jmenuje nejdelší řeka světa?',opts:['Amazonka','Nil','Jang-c-tiang','Mississippi'],ans:1,xp:20},
+  {q:'Kde leží pyramidy?',opts:['Irák','Egypt','Súdán','Maroko'],ans:1,xp:20},
+];
+let _qAnswered=false,_qMode='world';
+function renderQuiz(mode){
+  _qMode=mode||_qMode;_qAnswered=false;
+  const modes=[{k:'world',l:'🌍 Vědomosti'},{k:'family',l:'👨‍👩‍👧 Rodina'},{k:'photo',l:'📸 Foto'}];
+  document.getElementById('quiz-pills').innerHTML=modes.map(m=>`<div class="pill${m.k===_qMode?' on':''}" onclick="renderQuiz('${m.k}')">${m.l}</div>`).join('');
+  if(_qMode==='photo'){renderPhotoQuiz();return;}
+  const pool=_qMode==='world'?QWORLD:[
+    {q:'Jaký je den narozenin mámy?',opts:['Leden','Únor','Říjen','Prosinec'],ans:2,xp:15},
+    {q:'Jaká je oblíbená barva táty?',opts:['Modrá','Červená','Zelená','Černá'],ans:0,xp:15},
+    {q:'Kde jsme byli naposledy na dovolené?',opts:['Moře','Hory','Doma','Zahraničí'],ans:0,xp:15},
+  ];
+  const q=pool[Math.floor(Math.random()*pool.length)];
+  document.getElementById('quiz-container').innerHTML=`
+    <div class="card card-p">
+      <div style="font-family:'Fredoka One',cursive;font-size:1.05rem;margin-bottom:4px">${q.q}</div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-bottom:12px">+${q.xp} XP za správnou</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px" id="q-opts">
+        ${q.opts.map((o,i)=>`<div style="background:var(--s3);border:2px solid transparent;border-radius:9px;padding:9px 7px;text-align:center;cursor:pointer;font-weight:700;font-size:0.8rem;transition:all .15s;" onclick="answerQ(${i},${q.ans},${q.xp},this)">${o}</div>`).join('')}
+      </div>
+      <div id="q-res" style="margin-top:10px;text-align:center;"></div>
+    </div>
+    <button class="btn primary" style="margin-top:8px;width:100%;" onclick="renderQuiz()">Další otázka →</button>`;
+}
+function answerQ(idx,ans,xp,el){
+  if(_qAnswered)return;_qAnswered=true;
+  document.querySelectorAll('#q-opts div')[ans].style.cssText='background:#1a3d2a;border-color:var(--green);border-radius:9px;padding:9px 7px;text-align:center;font-weight:700;font-size:0.8rem;color:var(--green);border:2px solid var(--green);';
+  if(idx!==ans)el.style.cssText='background:#3d1a1a;border-color:var(--red);border-radius:9px;padding:9px 7px;text-align:center;font-weight:700;font-size:0.8rem;color:var(--red);border:2px solid var(--red);';
+  const res=document.getElementById('q-res');
+  if(idx===ans){res.innerHTML=`<div class="xp-chip pos" style="display:inline-block;padding:6px 14px;font-size:0.85rem">✅ Správně! +${xp} XP</div>`;addXP(S.currentPlayer.id,xp,'+'+xp+' XP kvíz!');}
+  else{res.innerHTML=`<div class="xp-chip neg" style="display:inline-block;padding:6px 14px;font-size:0.85rem">❌ Špatně.</div>`;}
+}
+
+// Photo quiz
+let _pqFile=null;
+function renderPhotoQuiz(){
+  const isParent=S.currentPlayer.role==='parent';
+  let html=S.gallery.filter(g=>g.isQuiz).map((pq,idx)=>{
+    const myAns=pq.quizAnswers?.[S.currentPlayer.id];
+    return `<div class="card card-p" style="margin-bottom:10px">
+      <div style="font-size:0.7rem;color:var(--muted);margin-bottom:6px">Přidal/a: ${pq.who}</div>
+      <img src="${pq.src}" style="width:100%;border-radius:8px;max-height:200px;object-fit:cover;margin-bottom:10px">
+      <div style="font-family:'Fredoka One',cursive;font-size:1rem;margin-bottom:8px">${pq.quizQ}</div>
+      ${myAns?`<div class="xp-chip pos" style="display:inline-block">✅ Zodpovězeno: ${pq.quizAns}</div>`:
+      `<div style="display:flex;gap:6px"><input id="pqa-${idx}" class="chat-inp" style="flex:1" placeholder="Tvá odpověď..."><button class="btn primary" onclick="checkPQA(${idx})">OK</button></div>`}
+    </div>`;
+  }).join('');
+  if(!html)html=`<div class="empty-s"><div class="ei">📸</div><p>Zatím žádné foto kvízy.<br>Přidej obrázek do galerie a označ jako kvíz!</p></div>`;
+  document.getElementById('quiz-container').innerHTML=html;
+}
+function checkPQA(idx){
+  const pq=S.gallery.filter(g=>g.isQuiz)[idx];if(!pq)return;
+  const val=document.getElementById('pqa-'+idx)?.value.trim().toLowerCase();
+  if(!val)return;
+  if(!pq.quizAnswers)pq.quizAnswers={};
+  pq.quizAnswers[S.currentPlayer.id]=true;
+  const correct=pq.quizAns.toLowerCase();
+  if(val===correct||correct.includes(val)||val.includes(correct)){addXP(S.currentPlayer.id,30,'Správně! +30 XP 📸');}
+  else{toast('Špatně! Správně: '+pq.quizAns,'r');}
+  saveAll();renderPhotoQuiz();
+}
+
+// ═══════════════════════════
+// GAMES
+// ═══════════════════════════
+let _game='dama';
+function renderGame(g){
+  _game=g||_game;
+  document.getElementById('game-pills').innerHTML=[{k:'dama',l:'♟ Dáma'},{k:'reaction',l:'⚡ Reakce'},{k:'memory',l:'🧩 Pexeso'}].map(x=>`<div class="pill${x.k===_game?' on':''}" onclick="renderGame('${x.k}')">${x.l}</div>`).join('');
+  if(_game==='dama')initDamaGame();
+  else if(_game==='reaction')initReaction();
+  else initMemory();
+}
+
+// DAMA
+let _db=[],_dSel=null,_dTurn='red',_dScore={red:0,blue:0};
+function initDamaGame(){
+  _db=[];_dSel=null;_dTurn='red';_dScore={red:0,blue:0};
+  for(let r=0;r<8;r++){_db[r]=[];for(let c=0;c<8;c++){
+    if((r+c)%2===1){
+      if(r<3)_db[r][c]={color:'blue',king:false};
+      else if(r>4)_db[r][c]={color:'red',king:false};
+      else _db[r][c]=null;
+    }else _db[r][c]=null;
+  }}
+  drawDama();
+}
+function drawDama(){
+  const possible=_dSel?getDamaMoves(_dSel[0],_dSel[1]).map(m=>m[0]+','+m[1]):[];
+  let boardHTML='';
+  for(let r=0;r<8;r++)for(let c=0;c<8;c++){
+    const dark=(r+c)%2===1;
+    const sel=_dSel&&_dSel[0]===r&&_dSel[1]===c;
+    const canMove=dark&&possible.includes(r+','+c);
+    const p=_db[r][c];
+    boardHTML+=`<div style="aspect-ratio:1;background:${sel?'#4da6ff':canMove?'rgba(61,214,140,.4)':dark?'#7a4f2a':'#d4a96a'};display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s;" onclick="clickDama(${r},${c})">
+      ${p?`<div style="width:74%;height:74%;border-radius:50%;background:radial-gradient(circle at 35% 35%,${p.color==='red'?'#ff8888,#cc0000':'#88bbff,#0044cc'});box-shadow:0 2px 5px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;font-size:0.75rem;color:${p.color==='red'?'#ff0':'#ff0'}">${p.king?'♛':''}</div>`:''}
+    </div>`;
+  }
+  document.getElementById('game-container').innerHTML=`
+    <div class="card card-p">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-weight:800;font-size:0.85rem">Na tahu: <span style="color:${_dTurn==='red'?'var(--red)':'var(--blue)'}">${_dTurn==='red'?'🔴 Červení':'🔵 Modří'}</span></div>
+        <div style="font-family:'Fredoka One',cursive;color:var(--yellow)">🔴${_dScore.red} : ${_dScore.blue}🔵</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(8,1fr);gap:2px;background:var(--s3);border-radius:8px;overflow:hidden;aspect-ratio:1;max-width:320px;margin:0 auto 10px;">${boardHTML}</div>
+      <div style="text-align:center"><button class="btn warning" onclick="initDamaGame()">Nová hra</button></div>
+    </div>`;
+}
+function clickDama(r,c){
+  const p=_db[r][c];
+  if(p&&p.color===_dTurn){_dSel=[r,c];drawDama();return;}
+  if(_dSel){
+    const moves=getDamaMoves(_dSel[0],_dSel[1]);
+    const m=moves.find(x=>x[0]===r&&x[1]===c);
+    if(m){
+      const[fr,fc]=_dSel;
+      _db[r][c]=_db[fr][fc];_db[fr][fc]=null;
+      if(m[2]!=null){_db[m[2]][m[3]]=null;_dScore[_dTurn]++;}
+      if(r===0&&_db[r][c].color==='red')_db[r][c].king=true;
+      if(r===7&&_db[r][c].color==='blue')_db[r][c].king=true;
+      _dSel=null;_dTurn=_dTurn==='red'?'blue':'red';
+      const reds=_db.flat().filter(x=>x&&x.color==='red').length;
+      const blues=_db.flat().filter(x=>x&&x.color==='blue').length;
+      if(!reds||!blues){toast((!reds?'🔵 Modří':'🔴 Červení')+' vyhráli! +60 XP');addXP(S.currentPlayer.id,60);initDamaGame();return;}
+    }else _dSel=null;
+    drawDama();
+  }
+}
+function getDamaMoves(r,c){
+  const p=_db[r][c];if(!p)return[];
+  const dirs=p.king?[[-1,-1],[-1,1],[1,-1],[1,1]]:p.color==='red'?[[-1,-1],[-1,1]]:[[1,-1],[1,1]];
+  return dirs.flatMap(([dr,dc])=>{
+    const nr=r+dr,nc=c+dc;
+    if(nr<0||nr>7||nc<0||nc>7)return[];
+    if(!_db[nr][nc])return[[nr,nc,null,null]];
+    if(_db[nr][nc].color!==p.color){
+      const jr=nr+dr,jc=nc+dc;
+      if(jr>=0&&jr<8&&jc>=0&&jc<8&&!_db[jr][jc])return[[jr,jc,nr,nc]];
+    }
+    return[];
+  });
+}
+
+// REACTION
+let _rTimer=null,_rStart=null;
+function initReaction(){
+  document.getElementById('game-container').innerHTML=`
+    <div class="card card-p" style="text-align:center">
+      <div style="font-family:'Fredoka One',cursive;font-size:1.1rem;margin-bottom:4px">⚡ Kdo dřív klikne?</div>
+      <p style="color:var(--muted);font-size:0.78rem;margin-bottom:12px">Čekej na zelené světlo a klikni!</p>
+      <div id="r-area" style="min-height:100px;background:var(--s2);border:1px solid var(--border);border-radius:var(--r);display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:800;font-size:0.95rem;transition:all .2s;margin-bottom:10px;user-select:none;" onclick="hitReaction()">Stiskni START</div>
+      <div style="display:flex;gap:8px;justify-content:center;align-items:center">
+        <button class="btn warning" onclick="startReaction()">▶ START</button>
+        <div id="r-res" style="font-weight:700;font-size:0.88rem;"></div>
+      </div>
+    </div>`;
+}
+function startReaction(){
+  if(_rTimer){clearTimeout(_rTimer);_rTimer=null;}_rStart=null;
+  const a=document.getElementById('r-area');if(!a)return;
+  a.style.background='#3d2010';a.style.color='var(--orange)';a.textContent='🔴 Čekej...';
+  document.getElementById('r-res').textContent='';
+  _rTimer=setTimeout(()=>{
+    a.style.background='var(--green)';a.style.color='#0d1117';a.textContent='🟢 TEĎ!';
+    _rStart=Date.now();_rTimer=null;
+  },1500+Math.random()*4000);
+}
+function hitReaction(){
+  const a=document.getElementById('r-area');const res=document.getElementById('r-res');
+  if(!a||!res)return;
+  if(_rTimer){clearTimeout(_rTimer);_rTimer=null;a.style.background='var(--s2)';a.style.color='var(--text)';a.textContent='Příliš brzy! 😅';return;}
+  if(_rStart){
+    const ms=Date.now()-_rStart;_rStart=null;
+    a.style.background='var(--s2)';a.style.color='var(--text)';a.textContent='Stiskni START';
+    const xp=ms<200?50:ms<350?35:ms<500?20:10;
+    res.textContent='⏱ '+ms+' ms — +'+xp+' XP!';
+    addXP(S.currentPlayer.id,xp,'+'+xp+' XP reakce!');
+  }
+}
+
+// MEMORY
+const MEMOS=['🍕','🦊','⭐','🎮','🎸','🌈','🦄','🏆','🐬','🎃','🚀','🍦'];
+let _mCards=[],_mFlipped=[],_mSolved=[],_mLocked=false,_mMoves=0;
+function initMemory(){
+  _mSolved=[];_mFlipped=[];_mLocked=false;_mMoves=0;
+  const pairs=[...MEMOS.slice(0,8),...MEMOS.slice(0,8)].sort(()=>Math.random()-.5);
+  _mCards=pairs;
+  document.getElementById('game-container').innerHTML=`
+    <div class="card card-p">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-family:'Fredoka One',cursive;font-size:1.05rem">🧩 Pexeso</span>
+        <span id="m-info" style="font-size:0.78rem;color:var(--muted)">Tahy: 0</span>
+      </div>
+      <div id="m-board" style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px;"></div>
+      <button class="btn warning" onclick="initMemory()">Nová hra</button>
+    </div>`;
+  drawMemory();
+}
+function drawMemory(){
+  const b=document.getElementById('m-board');if(!b)return;
+  b.innerHTML=_mCards.map((_,i)=>{
+    const shown=_mFlipped.includes(i)||_mSolved.includes(i);
+    const matched=_mSolved.includes(i);
+    return `<div style="aspect-ratio:1;background:${matched?'#1a3d2a':shown?'#1a2535':'var(--s2)'};border:1.5px solid ${matched?'var(--green)':shown?'var(--blue)':'var(--border)'};border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;cursor:pointer;transition:all .15s;" onclick="flipMem(${i})">${shown?_mCards[i]:'❓'}</div>`;
+  }).join('');
+  const inf=document.getElementById('m-info');if(inf)inf.textContent='Tahy: '+_mMoves;
+}
+function flipMem(i){
+  if(_mLocked||_mFlipped.includes(i)||_mSolved.includes(i))return;
+  _mFlipped.push(i);drawMemory();
+  if(_mFlipped.length===2){
+    _mMoves++;
+    const[a,b]=_mFlipped;
+    if(_mCards[a]===_mCards[b]){_mSolved.push(a,b);_mFlipped=[];drawMemory();if(_mSolved.length===_mCards.length){toast('🎉 Hotovo za '+_mMoves+' tahů! +60 XP');addXP(S.currentPlayer.id,60);}}
+    else{_mLocked=true;setTimeout(()=>{_mFlipped=[];_mLocked=false;drawMemory();},900);}
+  }
+}
+
+// ═══════════════════════════
+// HOBBIES & MUSIC & VOTES
+// ═══════════════════════════
+let curHobbyFilter='hobbies';
+function filterHobbies(f,el){
+  curHobbyFilter=f;
+  document.querySelectorAll('#pg-hobbies .pill').forEach(x=>x.classList.remove('on'));
+  el.classList.add('on');
+  renderHobbies(f);
+}
+function renderHobbies(f){
+  curHobbyFilter=f||'hobbies';
+  const c=document.getElementById('hobbies-container');
+  if(f==='vote'){renderVotes(c);return;}
+  if(f==='wish'){renderWishes(c);return;}
+  let html='';
+  S.players.forEach(p=>{
+    const h=S.hobbies[p.id]||{};
+    if(f==='music'&&!h.music)return;
+    if(f==='hobbies'&&!h.sport&&!h.art&&!h.food&&!h.place)return;
+    html+=`<div class="hobby-card">
+      <div class="hobby-ava">${p.avatar}</div>
+      <div class="hobby-body">
+        <div class="hobby-name">${p.name}</div>
+        <div class="hobby-items">`;
+    if(f==='music'||f==='hobbies'){
+      if(h.music)h.music.split(',').forEach(x=>x.trim()&&(html+=`<span class="hobby-tag music">🎵 ${x.trim()}</span>`));
+      if(f==='hobbies'){
+        if(h.sport)h.sport.split(',').forEach(x=>x.trim()&&(html+=`<span class="hobby-tag sport">🏃 ${x.trim()}</span>`));
+        if(h.art)h.art.split(',').forEach(x=>x.trim()&&(html+=`<span class="hobby-tag art">🎨 ${x.trim()}</span>`));
+        if(h.food)h.food.split(',').forEach(x=>x.trim()&&(html+=`<span class="hobby-tag food">🍕 ${x.trim()}</span>`));
+        if(h.place)h.place.split(',').forEach(x=>x.trim()&&(html+=`<span class="hobby-tag place">✈️ ${x.trim()}</span>`));
+      }
+    }
+    html+=`</div></div></div>`;
+  });
+  if(!html)html=`<div class="empty-s"><div class="ei">🎯</div><p>Zatím nikdo nevyplnil záliby.<br>Klikni "Upravit moje" nahoře!</p></div>`;
+  c.innerHTML=html;
+}
+function openHobbyModal(){
+  const h=S.hobbies[S.currentPlayer.id]||{};
+  document.getElementById('m-music').value=h.music||'';
+  document.getElementById('m-sport').value=h.sport||'';
+  document.getElementById('m-art').value=h.art||'';
+  document.getElementById('m-food').value=h.food||'';
+  document.getElementById('m-place').value=h.place||'';
+  openM('m-hobby');
+}
+function saveHobby(){
+  S.hobbies[S.currentPlayer.id]={
+    music:document.getElementById('m-music').value,
+    sport:document.getElementById('m-sport').value,
+    art:document.getElementById('m-art').value,
+    food:document.getElementById('m-food').value,
+    place:document.getElementById('m-place').value,
+  };
+  saveAll();closeM('m-hobby');renderHobbies(curHobbyFilter);toast('Záliby uloženy! 🎯');
+}
+
+// VOTES
+function renderVotes(container){
+  let html=`<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="btn primary" style="font-size:0.75rem;padding:6px 12px" onclick="openM('m-vote')">+ Nové hlasování</button></div>`;
+  if(S.votes.length===0)html+=`<div class="empty-s"><div class="ei">🗳️</div><p>Zatím žádné hlasování.<br>Vytvoř první!</p></div>`;
+  S.votes.forEach((v,vi)=>{
+    const total=v.votes.reduce((s,x)=>s+x,0)||1;
+    html+=`<div class="vote-card"><div class="vote-q">${v.q}</div><div class="vote-opts">`;
+    v.opts.forEach((opt,oi)=>{
+      const pct=Math.round(v.votes[oi]/total*100);
+      const myVote=v.voters[S.currentPlayer.id]===oi;
+      html+=`<div class="vote-opt${myVote?' voted':''}" onclick="castVote(${vi},${oi})">
+        <span class="vote-opt-label">${opt}</span>
+        <div class="vote-bar"><div class="vote-bar-fill" style="width:${pct}%"></div></div>
+        <span class="vote-pct">${pct}%</span>
+      </div>`;
+    });
+    html+=`</div></div>`;
+  });
+  container.innerHTML=html;
+}
+function saveVote(){
+  const q=document.getElementById('m-vote-q').value.trim();if(!q){toast('Zadej otázku','r');return;}
+  const opts=document.getElementById('m-vote-opts').value.split('\n').map(x=>x.trim()).filter(Boolean);
+  if(opts.length<2){toast('Zadej alespoň 2 možnosti','r');return;}
+  S.votes.push({q,opts,votes:opts.map(()=>0),voters:{}});
+  saveAll();closeM('m-vote');renderHobbies('vote');toast('Hlasování vytvořeno! 🗳️');
+}
+function castVote(vi,oi){
+  const v=S.votes[vi];const pid=S.currentPlayer.id;
+  if(v.voters[pid]!==undefined){v.votes[v.voters[pid]]--;} // undo old
+  v.votes[oi]++;v.voters[pid]=oi;
+  saveAll();renderHobbies('vote');
+}
+
+// WISHES / SECRETS
+function renderWishes(container){
+  const p=S.currentPlayer;
+  const myWish=S.wishes[p.id]||{};
+  let html=`<div class="wish-card">
+    <div style="font-family:'Fredoka One',cursive;font-size:1rem;margin-bottom:8px;color:var(--purple)">🌙 Moje tajné přání</div>`;
+  if(myWish.joker||myWish.dream){
+    if(myWish.joker)html+=`<div style="margin-bottom:8px"><div class="label-s">💫 Tajný žolík (800 XP)</div><div class="wish-content wish-mine">${myWish.joker}</div></div>`;
+    if(myWish.dream)html+=`<div><div class="label-s">🌠 Velký sen (2000 XP)</div><div class="wish-content wish-mine">${myWish.dream}</div></div>`;
+  }else{html+=`<div style="text-align:center;padding:10px;color:var(--muted);font-size:0.82rem">Zatím jsi nevyplnil/a svůj sen. Klikni níže!</div>`;}
+  html+=`<button class="btn purple" style="margin-top:10px;width:100%;" onclick="openM('m-wish')">✏️ Vyplnit / upravit přání</button></div>`;
+  // Show others (only name, not content)
+  html+=`<div class="sec-hd" style="margin-top:14px">🌟 Přání ostatních členů rodiny</div>`;
+  S.players.filter(x=>x.id!==p.id).forEach(pl=>{
+    const w=S.wishes[pl.id]||{};
+    html+=`<div class="card card-p" style="margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:1.5rem">${pl.avatar}</span><span style="font-family:'Fredoka One',cursive">${pl.name}</span></div>
+      ${w.joker?`<div style="margin-bottom:5px"><div class="label-s">💫 Tajný žolík (800 XP)</div><div style="background:var(--s3);border-radius:8px;padding:8px;font-size:0.82rem;color:var(--purple)">🔒 Soukromé — jen viditelné majiteli</div></div>`:'<div style="color:var(--muted);font-size:0.75rem">Žolík nevyplněn</div>'}
+      ${w.dream?`<div style="margin-top:5px"><div class="label-s">🌠 Velký sen (2000 XP)</div><div style="background:var(--s3);border-radius:8px;padding:8px;font-size:0.82rem;color:var(--muted)">🔒 Soukromé</div></div>`:''}
+    </div>`;
+  });
+  container.innerHTML=html;
+}
+function saveWish(){
+  S.wishes[S.currentPlayer.id]={
+    joker:document.getElementById('m-wish-joker').value,
+    dream:document.getElementById('m-wish-dream').value,
+  };
+  saveAll();closeM('m-wish');toast('Přání uloženo! 🌙','p');renderHobbies('wish');
+}
+function renderSecretWishes(){
+  const p=S.currentPlayer;const w=S.wishes[p.id]||{};
+  let html='<div class="sec-hd">🌙 Tajný žolík & Sen</div>';
+  if(w.joker){
+    html+=`<div class="wish-card" style="margin-bottom:8px">
+      <div class="label-s">💫 Tajný žolík</div>
+      <div class="wish-content wish-mine" style="margin-bottom:10px">${w.joker}</div>
+      <button class="btn purple" ${p.xp<800?'disabled':''} style="width:100%" onclick="redeemWish('joker',800,'${w.joker.replace(/'/g,"\\'")}')">
+        ${p.xp>=800?'🔓 Vyměnit za 800 XP':'🔒 Potřebuji 800 XP (mám '+p.xp+')'}
+      </button>
+    </div>`;
+  }else{html+=`<div class="card card-p" style="margin-bottom:8px;text-align:center"><div class="empty-s"><div class="ei">💫</div><p>Tajný žolík nevyplněn</p></div><button class="btn purple" style="width:100%;margin-top:8px" onclick="openM('m-wish')">Vyplnit přání</button></div>`;}
+  if(w.dream){
+    html+=`<div class="wish-card">
+      <div class="label-s">🌠 Velký sen</div>
+      <div class="wish-content wish-mine" style="margin-bottom:10px">${w.dream}</div>
+      <button class="btn purple" ${p.xp<2000?'disabled':''} style="width:100%" onclick="redeemWish('dream',2000,'${w.dream.replace(/'/g,"\\'")}')">
+        ${p.xp>=2000?'🌠 Splnit sen za 2000 XP':'🔒 Potřebuji 2000 XP (mám '+p.xp+')'}
+      </button>
+    </div>`;
+  }
+  document.getElementById('secret-wish-section').innerHTML=html;
+}
+function redeemWish(type,cost,title){
+  if(!confirm('Vyměnit '+cost+' XP za: '+title+'?'))return;
+  addXP(S.currentPlayer.id,-cost,'Sen splněn! -'+cost+' XP 🌠');
+  addChatMsg(S.currentPlayer.name+' splnil/a svůj '+(type==='joker'?'tajný žolík':'velký sen')+': "'+title+'" 🌟🎉',S.currentPlayer.id,'system');
+  renderRewards();toast('🌠 Sen splněn! Gratulujeme!','p');
+}
+
+// ═══════════════════════════
+// GALLERY
+// ═══════════════════════════
+let _galFile=null,_galIsQuiz=false,_galQuizQ='',_galQuizAns='';
+function addGalleryPhoto(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    _galFile=e.target.result;
+    document.getElementById('gallery-caption-row').style.display='block';
+  };
+  reader.readAsDataURL(file);
+}
+function saveGalleryPhoto(){
+  if(!_galFile){toast('Nahrej foto','r');return;}
+  const caption=document.getElementById('gal-caption-inp').value.trim();
+  const isQuiz=confirm('Přidat jako foto kvíz?\n(Ostatní budou hádat kde/kdy/co je na fotce)');
+  let quizQ='',quizAns='';
+  if(isQuiz){
+    quizQ=prompt('Otázka pro ostatní:')||'Kde/kdy je tato fotka?';
+    quizAns=prompt('Správná odpověď:')||'';
+  }
+  S.gallery.push({
+    id:Date.now(),src:_galFile,who:S.currentPlayer.name,whoAva:S.currentPlayer.avatar,
+    caption,isQuiz,quizQ,quizAns,quizAnswers:{},likes:[],date:Date.now()
+  });
+  _galFile=null;
+  document.getElementById('gal-caption-inp').value='';
+  document.getElementById('gallery-caption-row').style.display='none';
+  saveAll();renderGallery();addXP(S.currentPlayer.id,20,'Výtvor přidán do galerie! +20 XP 🎨');
+  addChatMsg(S.currentPlayer.name+' přidal/a výtvor do galerie! 🎨',S.currentPlayer.id,'system');
+}
+function cancelGalleryPhoto(){_galFile=null;document.getElementById('gallery-caption-row').style.display='none';}
+function renderGallery(){
+  const g=document.getElementById('gallery-grid');
+  if(S.gallery.length===0){g.innerHTML=`<div class="empty-s" style="grid-column:span 2"><div class="ei">🎨</div><p>Galerie je prázdná.<br>Přidej první výtvor!</p></div>`;return;}
+  g.innerHTML=[...S.gallery].sort((a,b)=>b.date-a.date).map((item,idx)=>`
+    <div class="gal-item">
+      <img src="${item.src}" class="gal-img" loading="lazy">
+      <div class="gal-caption">
+        <div class="gal-who">${item.whoAva} ${item.who}${item.isQuiz?' 🧠':''}</div>
+        <div class="gal-desc">${item.caption||''}</div>
+        <div class="gal-likes" onclick="likeGallery(${idx})">❤️ ${item.likes.length} · Líbí</div>
+      </div>
+    </div>`).join('');
+}
+function likeGallery(idx){
+  const item=[...S.gallery].sort((a,b)=>b.date-a.date)[idx];
+  const realItem=S.gallery.find(x=>x.id===item.id);
+  if(!realItem)return;
+  const pid=S.currentPlayer.id;
+  if(realItem.likes.includes(pid)){realItem.likes=realItem.likes.filter(x=>x!==pid);}
+  else{realItem.likes.push(pid);}
+  saveAll();renderGallery();
+}
+
+// ═══════════════════════════
+// CHAT
+// ═══════════════════════════
+function renderChat(){
+  const box=document.getElementById('chat-msgs');
+  box.innerHTML=S.msgs.map(m=>{
+    const mine=m.sender===S.currentPlayer.id;
+    if(m.sender==='system')return `<div style="text-align:center"><div class="cm-bubble sys">${m.text}</div></div>`;
+    return `<div class="cm ${mine?'me':'them'}">
+      ${!mine?`<div class="cm-who">${m.name}</div>`:''}
+      <div class="cm-bubble">${m.text}</div>
+    </div>`;
+  }).join('');
+  box.scrollTop=box.scrollHeight;
+}
+function sendChat(){
+  const inp=document.getElementById('chat-inp');const t=inp.value.trim();if(!t)return;
+  inp.value='';addChatMsg(t,S.currentPlayer.id,S.currentPlayer.name);
+}
+// addChatMsg is defined in Firebase sync block above
+
+// ═══════════════════════════
+// DAILY QUESTION
+// ═══════════════════════════
+function renderDQ(){
+  const todayKey=td();
+  if(!S.dqs.find(q=>q.date===todayKey)){
+    const rq=DEFAULT_DQS[Math.floor(Date.now()/86400000)%DEFAULT_DQS.length];
+    S.dqs.push({id:Date.now(),q:rq,by:'Systém',date:todayKey});saveAll();
+  }
+  const todayQs=S.dqs.filter(q=>q.date===todayKey);
+  const ans=S.dqAnswers[todayKey]||{};
+  let html='';
+  todayQs.forEach(q=>{
+    const qAns=ans[q.id]||[];
+    html+=`<div class="dq-box">
+      <div class="dq-lbl">⭐ Otázka dne od ${q.by}</div>
+      <div class="dq-q">${q.q}</div>
+      <div class="dq-ans-list">${qAns.map(a=>`<div class="dq-ans"><div class="dq-ans-who">${a.name}:</div><div class="dq-ans-txt">${a.text}</div></div>`).join('')}</div>
+      ${!qAns.find(a=>a.pid===S.currentPlayer.id)?`<div class="dq-inp-row"><input class="dq-inp" id="dq-${q.id}" placeholder="Tvá odpověď..."><button class="btn primary" style="font-size:0.75rem;padding:7px 12px;white-space:nowrap" onclick="answerDQ('${q.id}')">Odpovědět</button></div>`:'<div class="xp-chip pos" style="display:inline-block">✅ Zodpovězeno</div>'}
+    </div>`;
+  });
+  html+=`<button class="btn-add-dq" style="width:100%;background:none;border:1.5px dashed var(--border);border-radius:8px;padding:9px;color:var(--muted);cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.78rem;" onclick="openM('m-dq')">➕ Přidat vlastní otázku dne</button>`;
+  document.getElementById('dq-container').innerHTML=html;
+}
+function saveDQ(){
+  const q=document.getElementById('m-dq-text').value.trim();if(!q){toast('Zadej otázku','r');return;}
+  S.dqs.push({id:Date.now(),q,by:S.currentPlayer.name,date:td()});
+  addXP(S.currentPlayer.id,10,'Otázka dne přidána +10 XP');
+  saveAll();closeM('m-dq');renderDQ();
+}
+function answerDQ(qid){
+  const inp=document.getElementById('dq-'+qid);if(!inp)return;
+  const text=inp.value.trim();if(!text){toast('Napiš odpověď','r');return;}
+  const todayKey=td();
+  if(!S.dqAnswers[todayKey])S.dqAnswers[todayKey]={};
+  if(!S.dqAnswers[todayKey][qid])S.dqAnswers[todayKey][qid]=[];
+  S.dqAnswers[todayKey][qid].push({pid:S.currentPlayer.id,name:S.currentPlayer.name,text});
+  addXP(S.currentPlayer.id,15,'Odpověď na otázku dne +15 XP');
+  saveAll();renderDQ();
+  addChatMsg(S.currentPlayer.name+': "'+text+'" (otázka dne)',S.currentPlayer.id,S.currentPlayer.name);
+}
+
+// ═══════════════════════════
+// FEED
+// ═══════════════════════════
+let curFeedFilter='all',_feedType='praise',_feedTarget=null;
+function openFeedModal(){
+  _feedType='praise';_feedTarget=null;
+  selFeedType('praise');
+  document.getElementById('m-feed-tgt').innerHTML=S.players.map(p=>`
+    <div class="tgt-pill" onclick="selFeedTgt(${p.id},this)"><span>${p.avatar}</span>${p.name}</div>`).join('');
+  document.getElementById('m-feed-text').value='';
+  openM('m-feed');
+}
+function selFeedType(t){_feedType=t;document.getElementById('ft-praise').classList.toggle('on',t==='praise');document.getElementById('ft-complaint').classList.toggle('on',t==='complaint');}
+function selFeedTgt(id,el){_feedTarget=id;document.querySelectorAll('#m-feed-tgt .tgt-pill').forEach(x=>x.classList.remove('on'));el.classList.add('on');}
+function saveFeed(){
+  if(!_feedTarget){toast('Vyber koho se to týká','r');return;}
+  const text=document.getElementById('m-feed-text').value.trim();if(!text){toast('Napiš zprávu','r');return;}
+  const target=S.players.find(p=>p.id===_feedTarget);
+  S.feedItems.push({type:_feedType,by:S.currentPlayer.name,byAva:S.currentPlayer.avatar,about:target.name,aboutAva:target.avatar,text,time:Date.now()});
+  saveAll();closeM('m-feed');renderFeed(curFeedFilter);
+  toast(_feedType==='praise'?'Pochvala odeslána! 👍':'Stížnost podána! 📣');
+}
+function renderFeed(f){
+  curFeedFilter=f;
+  document.getElementById('feed-pills').innerHTML=[{k:'all',l:'Vše'},{k:'praise',l:'👍 Pochvaly'},{k:'complaint',l:'👎 Stížnosti'}].map(x=>`<div class="pill${x.k===f?' on':''}" onclick="renderFeed('${x.k}')">${x.l}</div>`).join('');
+  let items=[...S.feedItems].sort((a,b)=>b.time-a.time);
+  if(f==='praise')items=items.filter(x=>x.type==='praise');
+  else if(f==='complaint')items=items.filter(x=>x.type==='complaint');
+  document.getElementById('feed-list').innerHTML=items.length?items.map(i=>`
+    <div class="feed-item ${i.type}">
+      <div class="feed-top"><div><div class="feed-who">${i.byAva} ${i.by} → ${i.aboutAva} ${i.about}</div><span class="feed-badge ${i.type}">${i.type==='praise'?'👍 Pochvala':'👎 Stížnost'}</span></div><div class="feed-time">${new Date(i.time).toLocaleDateString('cs')}</div></div>
+      <div class="feed-text">${i.text}</div>
+    </div>`).join(''):`<div class="empty-s"><div class="ei">📣</div><p>Zatím nic</p></div>`;
+}
+
+// ═══════════════════════════
+// REWARDS
+// ═══════════════════════════
+function renderRewards(){
+  const p=S.currentPlayer;
+  document.getElementById('reward-list').innerHTML=REWARDS.map(r=>`
+    <div class="rw-row">
+      <div class="rw-ico">${r.icon}</div>
+      <div class="rw-body">
+        <div class="rw-title">${r.title}</div>
+        <div class="rw-desc">${r.desc}</div>
+        <button class="btn-rdm" ${p.xp<r.cost?'disabled':''} onclick="redeem(${r.cost},'${r.title.replace(/'/g,"\\'")}')">
+          ${p.xp>=r.cost?'🎁 Vyměnit!':'🔒 '+r.cost+' XP'}
+        </button>
+      </div>
+      <div class="rw-cost">⭐ ${r.cost}</div>
+    </div>`).join('');
+  renderSecretWishes();
+}
+function redeem(cost,title){
+  if(S.currentPlayer.xp<cost){toast('Nestačí XP!','r');return;}
+  if(!confirm('Vyměnit '+cost+' XP za: '+title+'?'))return;
+  addXP(S.currentPlayer.id,-cost,'Odměna: '+title+' 🎁');
+  addChatMsg(S.currentPlayer.name+' si vybral/a odměnu: '+title+' 🎁',S.currentPlayer.id,'system');
+  renderRewards();
+}
+
+// ═══════════════════════════
+// INIT
+// ═══════════════════════════
+// Start Firebase — načte data a spustí sync
+initFirebase();
+
+
+// ═══════════════════════════
+// WALLPAPER & THEMES
+// ═══════════════════════════
+const WALLPAPERS=[
+  {id:'none',  emoji:'⬛', style:'background:#0d1117'},
+  {id:'stars', emoji:'🌌', style:'background:linear-gradient(160deg,#0d1117 0%,#1a1040 50%,#0d1117 100%)'},
+  {id:'forest',emoji:'🌲', style:'background:linear-gradient(160deg,#0a1f0a,#1a3d1a,#0d2010)'},
+  {id:'ocean', emoji:'🌊', style:'background:linear-gradient(160deg,#0a1525,#0d2d4a,#0a1a35)'},
+  {id:'sunset',emoji:'🌅', style:'background:linear-gradient(160deg,#2d0a1a,#4a1a0a,#2d200a)'},
+  {id:'candy', emoji:'🍬', style:'background:linear-gradient(160deg,#2d0a2d,#1a0a3d,#0a1a2d)'},
+  {id:'fire',  emoji:'🔥', style:'background:linear-gradient(160deg,#3d0a00,#2d1500,#3d2200)'},
+  {id:'ice',   emoji:'❄️', style:'background:linear-gradient(160deg,#0a1a2d,#0d2535,#0a2030)'},
+  {id:'custom',emoji:'📷', style:''},
+];
+const THEMES=[
+  {id:'default',name:'Výchozí',accent:'#ffd166'},
+  {id:'blue',   name:'Modrá',  accent:'#4da6ff'},
+  {id:'green',  name:'Zelená', accent:'#3dd68c'},
+  {id:'purple', name:'Fialová',accent:'#b57bee'},
+  {id:'red',    name:'Červená',accent:'#ff5572'},
+  {id:'orange', name:'Oranžová',accent:'#ff8c42'},
+  {id:'pink',   name:'Růžová', accent:'#ff6eb4'},
+  {id:'teal',   name:'Tyrkys', accent:'#2dd4bf'},
+];
+let _curWP=localStorage.getItem('rh_wp')||'stars';
+let _curTheme=localStorage.getItem('rh_theme')||'default';
+let _customWP=null;
+try{_customWP=localStorage.getItem('rh_custom_wp');}catch(e){}
+
+function initWallpaper(){applyWallpaper(_curWP);applyTheme(_curTheme);}
+
+function applyWallpaper(id){
+  _curWP=id;localStorage.setItem('rh_wp',id);
+  const app=document.getElementById('app-page');
+  const login=document.getElementById('login-page');
+  let s='';
+  if(id==='custom'&&_customWP){s='background-image:url('+_customWP+');background-size:cover;background-position:center;';}
+  else if(id==='custom'){applyWallpaper('stars');return;}
+  else{const wp=WALLPAPERS.find(w=>w.id===id);if(wp)s=wp.style;}
+  if(app){app.setAttribute('style',s);}
+  if(login){login.setAttribute('style',s);}
+  document.querySelectorAll('.wp-tile').forEach(t=>t.classList.toggle('on',t.dataset.wp===id));
+}
+function applyTheme(id){
+  _curTheme=id;localStorage.setItem('rh_theme',id);
+  const t=THEMES.find(x=>x.id===id);if(!t)return;
+  document.documentElement.style.setProperty('--yellow',t.accent);
+  document.querySelectorAll('.theme-dot').forEach(d=>d.classList.toggle('on',d.dataset.theme===id));
+}
+function setCustomWallpaper(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    _customWP=e.target.result;
+    try{localStorage.setItem('rh_custom_wp',_customWP);}catch(err){}
+    applyWallpaper('custom');renderWPModal();
+  };
+  reader.readAsDataURL(file);
+}
+function renderWPModal(){
+  const grid=document.getElementById('wp-grid');
+  const trow=document.getElementById('theme-row');
+  if(!grid||!trow)return;
+  grid.innerHTML=WALLPAPERS.map(wp=>{
+    let bgStyle=wp.style;
+    if(wp.id==='custom'&&_customWP)bgStyle='background-image:url('+_customWP+');background-size:cover;background-position:center';
+    else if(wp.id==='custom')bgStyle='background:var(--s2)';
+    return '<div class="wp-tile'+((_curWP===wp.id)?' on':'')+'" data-wp="'+wp.id+'" style="'+bgStyle+'" onclick="applyWallpaper(''+wp.id+'')"><span style="font-size:1.8rem;filter:drop-shadow(0 1px 4px rgba(0,0,0,.7))">'+wp.emoji+'</span></div>';
+  }).join('');
+  trow.innerHTML=THEMES.map(t=>'<div class="theme-dot'+((_curTheme===t.id)?' on':'')+'" data-theme="'+t.id+'" style="background:'+t.accent+';box-shadow:0 2px 8px '+t.accent+'66" onclick="applyTheme(''+t.id+'')" title="'+t.name+'"></div>').join('');
+}
+const _origOpenM=openM;
+window.openM=function(id){_origOpenM(id);if(id==='m-wallpaper')renderWPModal();};
+initWallpaper();
+
+// PWA manifest blob
+const manifest={name:'Rodinný Hub',short_name:'RodinHub',start_url:window.location.href,display:'standalone',background_color:'#0d1117',theme_color:'#0d1117',icons:[{src:'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏠</text></svg>',sizes:'any',type:'image/svg+xml'}]};
+const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+document.getElementById('pwa-manifest').href=URL.createObjectURL(blob);
+</script>
+</body>
+</html>
