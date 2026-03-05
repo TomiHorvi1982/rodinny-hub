@@ -803,6 +803,7 @@ textarea.m-inp{resize:none;min-height:72px;}
     <div class="hdr-right">
       <div class="hdr-xp">⭐ <span id="h-famxp">0</span> XP</div>
       <button class="hdr-logout" style="font-size:1rem;padding:4px 9px;border-color:var(--purple)" onclick="openM('m-wallpaper')" title="Změnit tapetu">🎨</button>
+      <button class="hdr-logout" style="font-size:1rem;padding:4px 9px;border-color:var(--green)" onclick="initNotifications()" title="Povolit notifikace" id="notif-btn">🔔</button>
       <button class="hdr-logout" onclick="logout()">← Odhlásit</button>
     </div>
   </div>
@@ -2917,6 +2918,97 @@ function goPage(id,btn){
   if(id==='music'){initPiano();initDrums();renderYTList();}
   if(id==='combos')renderCombos();
   if(id==='admin')renderAdminPage();
+}
+
+
+// ═══════════════════════════
+// NOTIFIKACE (Firebase Cloud Messaging)
+// ═══════════════════════════
+let _fcmToken = null;
+
+async function initNotifications() {
+  if (!('Notification' in window)) return;
+  if (!_fbReady || !db_fb) return;
+  
+  try {
+    // Request permission
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return;
+    
+    // Register service worker for push
+    if ('serviceWorker' in navigator) {
+      const swCode = `
+self.addEventListener('push', e => {
+  const d = e.data ? e.data.json() : {};
+  e.waitUntil(self.registration.showNotification(d.title || '🏠 Rodinný Hub', {
+    body: d.body || 'Nová zpráva',
+    icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏠</text></svg>',
+    badge: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏠</text></svg>',
+    tag: d.tag || 'rh',
+    renotify: true,
+    data: d
+  }));
+});
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(clients.openWindow('/'));
+});
+      `;
+      const blob = new Blob([swCode], {type: 'application/javascript'});
+      const swUrl = URL.createObjectURL(blob);
+      try {
+        await navigator.serviceWorker.register(swUrl);
+        console.log('SW registered');
+      } catch(e) { console.warn('SW error:', e); }
+    }
+    
+    toast('🔔 Notifikace povoleny!');
+  } catch(e) {
+    console.warn('Notifications error:', e);
+  }
+}
+
+// Send local notification (works in-browser)
+function sendNotif(title, body, tag='rh') {
+  if (Notification.permission === 'granted') {
+    try {
+      new Notification(title, {
+        body,
+        icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏠</text></svg>',
+        tag,
+        renotify: true
+      });
+    } catch(e) {}
+  }
+}
+
+// Hook into key events to send notifications
+const _origAddChatMsg = addChatMsg;
+function addChatMsg(text, sender, name) {
+  _origAddChatMsg(text, sender, name);
+  // Notify if message is from someone else
+  if (S.currentPlayer && sender !== S.currentPlayer.id && sender !== 'system') {
+    sendNotif('💬 ' + name, text, 'chat');
+  }
+}
+
+// Notify on task completion (others see it)
+const _origCompleteTask = completeTask;
+function completeTask(id, xp, extra) {
+  _origCompleteTask(id, xp, extra);
+  const task = [...TASKS, ...(S.customTasks||[])].find(t=>t.id===id);
+  if (task && S.currentPlayer) {
+    sendNotif('✅ ' + S.currentPlayer.name, 'Splnil/a: ' + task.title, 'task');
+  }
+}
+
+// Notify on XP gain (for the player)
+const _origAddXP = addXP;
+function addXP(pid, amount, msg) {
+  _origAddXP(pid, amount, msg);
+  if (pid === S.currentPlayer?.id && amount > 0) {
+    sendNotif('⭐ +' + amount + ' XP!', msg || 'Body přidány', 'xp');
+  }
 }
 
 // ═══════════════════════════
