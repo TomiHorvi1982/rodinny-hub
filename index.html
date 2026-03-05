@@ -43,6 +43,39 @@ body{font-family:'Nunito',sans-serif;font-size:14px;color:var(--text);display:fl
 .page{padding:14px 16px 100px;}
 .sec-hd{font-size:1.15rem;margin:14px 0 10px;}
 
+
+/* ── PIN SYSTEM ── */
+.pin-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:all .2s;}
+.pin-dot.filled{background:var(--yellow);border-color:var(--yellow);transform:scale(1.1);}
+.pin-dot.error{background:var(--red);border-color:var(--red);}
+.pin-key{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px;font-family:'Fredoka One',cursive;font-size:1.3rem;color:var(--text);cursor:pointer;transition:all .15s;}
+.pin-key:active{transform:scale(.9);background:var(--s3);}
+
+/* ── PROPOSAL BADGE ── */
+.pending-badge{background:var(--red);color:white;border-radius:20px;padding:2px 8px;font-size:0.7rem;font-weight:800;margin-left:6px;}
+.proposal-card{background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;}
+.proposal-card .prop-type{font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:4px;}
+.proposal-card .prop-title{font-weight:800;font-size:0.9rem;margin-bottom:3px;}
+.proposal-card .prop-by{font-size:0.72rem;color:var(--muted);}
+
+/* ── COMBO ── */
+.combo-card{background:linear-gradient(135deg,var(--s2),#1a1040);border:1px solid var(--purple);border-radius:16px;padding:14px;margin-bottom:10px;}
+.combo-card .combo-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.combo-card .combo-ico{font-size:1.8rem;}
+.combo-card .combo-nm{font-family:'Fredoka One',cursive;font-size:1rem;}
+.combo-card .combo-bonus{margin-left:auto;background:rgba(255,209,102,.15);color:var(--yellow);border-radius:20px;padding:3px 10px;font-size:0.8rem;font-weight:800;}
+.combo-item{display:flex;align-items:center;gap:8px;padding:8px;background:rgba(255,255,255,.04);border-radius:10px;margin-bottom:6px;cursor:pointer;transition:all .2s;border:1px solid transparent;}
+.combo-item.done{background:rgba(61,214,140,.1);border-color:var(--green);}
+.combo-item .ci-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.8rem;flex-shrink:0;transition:all .2s;}
+.combo-item.done .ci-check{background:var(--green);border-color:var(--green);}
+.combo-complete{text-align:center;padding:12px;background:linear-gradient(135deg,rgba(255,209,102,.2),rgba(181,123,238,.2));border-radius:12px;margin-top:8px;animation:pulse 1s infinite;}
+
+/* ── ADMIN ── */
+.xp-setting-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);}
+.xp-setting-row:last-child{border-bottom:none;}
+.xp-setting-label{flex:1;font-size:0.82rem;}
+.xp-inp{background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:4px 8px;color:var(--text);font-size:0.85rem;font-weight:800;width:60px;text-align:center;}
+
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar{width:3px;height:3px;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
@@ -653,6 +686,110 @@ textarea.m-inp{resize:none;min-height:72px;}
   </div>
 </div>
 
+
+<!-- PIN LOGIN MODAL -->
+<div class="modal-bg" id="m-pin">
+  <div class="modal" style="text-align:center">
+    <div style="font-size:2.5rem;margin-bottom:8px" id="pin-ava">👤</div>
+    <h3 id="pin-name">Zadej PIN</h3>
+    <div id="pin-dots" style="display:flex;justify-content:center;gap:12px;margin:16px 0">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:220px;margin:0 auto">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key" onclick="pinPress('del')" style="color:var(--red)">⌫</button>
+      <button class="pin-key" onclick="pinPress('0')">0</button>
+      <button class="pin-key" onclick="closeM('m-pin')" style="color:var(--muted);font-size:0.75rem">Zrušit</button>
+    </div>
+    <div id="pin-err" style="color:var(--red);font-size:0.8rem;margin-top:10px;min-height:18px"></div>
+    <div style="font-size:0.72rem;color:var(--muted);margin-top:8px">Nemáš PIN? Požádej správce.</div>
+  </div>
+</div>
+
+<!-- SET PIN MODAL -->
+<div class="modal-bg" id="m-setpin">
+  <div class="modal" style="text-align:center">
+    <h3>🔑 Nastavit PIN</h3>
+    <div style="font-size:0.85rem;color:var(--muted);margin-bottom:16px" id="setpin-for">pro hráče</div>
+    <div id="setpin-dots" style="display:flex;justify-content:center;gap:12px;margin:12px 0">
+      <div class="pin-dot" id="spd0"></div>
+      <div class="pin-dot" id="spd1"></div>
+      <div class="pin-dot" id="spd2"></div>
+      <div class="pin-dot" id="spd3"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:220px;margin:0 auto">
+      <button class="pin-key" onclick="setPinPress('1')">1</button>
+      <button class="pin-key" onclick="setPinPress('2')">2</button>
+      <button class="pin-key" onclick="setPinPress('3')">3</button>
+      <button class="pin-key" onclick="setPinPress('4')">4</button>
+      <button class="pin-key" onclick="setPinPress('5')">5</button>
+      <button class="pin-key" onclick="setPinPress('6')">6</button>
+      <button class="pin-key" onclick="setPinPress('7')">7</button>
+      <button class="pin-key" onclick="setPinPress('8')">8</button>
+      <button class="pin-key" onclick="setPinPress('9')">9</button>
+      <button class="pin-key" onclick="setPinPress('del')" style="color:var(--red)">⌫</button>
+      <button class="pin-key" onclick="setPinPress('0')">0</button>
+      <button class="pin-key" onclick="closeM('m-setpin')" style="color:var(--muted);font-size:0.7rem">Zrušit</button>
+    </div>
+    <div id="setpin-err" style="color:var(--red);font-size:0.8rem;margin-top:10px;min-height:18px"></div>
+  </div>
+</div>
+
+<!-- CUSTOM TASK/REWARD PROPOSAL MODAL -->
+<div class="modal-bg" id="m-propose">
+  <div class="modal">
+    <h3>💡 Navrhnout vlastní položku</h3>
+    <div class="label-s">Typ</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button id="prop-task-btn" class="btn success" onclick="setPropType('task')" style="flex:1;border-radius:10px">📋 Úkol</button>
+      <button id="prop-reward-btn" class="btn" onclick="setPropType('reward')" style="flex:1;border-radius:10px;background:var(--s3)">🎁 Odměna</button>
+    </div>
+    <div class="label-s">Ikona (emoji)</div>
+    <input class="m-inp" id="prop-icon" placeholder="🌟" maxlength="2" style="width:60px">
+    <div class="label-s">Název</div>
+    <input class="m-inp" id="prop-title" placeholder="Název úkolu nebo odměny">
+    <div class="label-s">Popis</div>
+    <input class="m-inp" id="prop-desc" placeholder="Co přesně zahrnuje?">
+    <div class="label-s" id="prop-xp-label">Body (XP)</div>
+    <input class="m-inp" id="prop-xp" type="number" placeholder="25" min="5" max="500">
+    <div class="m-btns">
+      <button class="m-cancel" onclick="closeM('m-propose')">Zrušit</button>
+      <button class="m-save" onclick="submitProposal()">Odeslat ke schválení →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD COMBO MODAL -->
+<div class="modal-bg" id="m-add-combo">
+  <div class="modal">
+    <h3>⚡ Nová Combo Výzva</h3>
+    <div class="label-s">Název kombina</div>
+    <input class="m-inp" id="combo-name" placeholder="Ranní rutina superhrdiny">
+    <div class="label-s">Ikona</div>
+    <input class="m-inp" id="combo-icon" placeholder="⚡" maxlength="2" style="width:60px">
+    <div class="label-s">Bonus XP za splnění všeho</div>
+    <input class="m-inp" id="combo-bonus" type="number" placeholder="50" min="10" max="500">
+    <div class="label-s">Položky (každá na nový řádek)</div>
+    <textarea class="m-inp" id="combo-items" placeholder="Zuby ráno&#10;Ustlat postel&#10;Připraven včas&#10;Hezké pozdravení" style="min-height:100px"></textarea>
+    <div class="label-s">Pro koho?</div>
+    <div id="combo-targets" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+    <div class="m-btns">
+      <button class="m-cancel" onclick="closeM('m-add-combo')">Zrušit</button>
+      <button class="m-save" onclick="saveCombo()">Uložit Combo ⚡</button>
+    </div>
+  </div>
+</div>
 <!-- LOGIN -->
 <div id="login-page">
   <div class="login-logo">🏠 Rodinný Hub<small>Kdo jsi dnes?</small></div>
@@ -799,6 +936,73 @@ textarea.m-inp{resize:none;min-height:72px;}
       <div class="gallery-grid" id="gallery-grid"></div>
     </div>
 
+    <!-- MUSIC PAGE -->
+    <div class="page" id="pg-music">
+      <div class="sec-hd">🎵 Hudba & Piano</div>
+      <div class="card card-p" style="margin-bottom:12px">
+        <div style="font-family:'Fredoka One',cursive;font-size:0.9rem;color:var(--yellow);margin-bottom:10px">🎹 Mini Piano</div>
+        <div id="piano-keys" style="display:flex;gap:3px;overflow-x:auto;padding:4px 0"></div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <select id="piano-sound" style="background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:6px;color:var(--text);font-size:0.8rem">
+            <option value="sine">🎹 Piano</option>
+            <option value="square">🎸 Kytara</option>
+            <option value="triangle">🎺 Flétna</option>
+            <option value="sawtooth">🎻 Housle</option>
+          </select>
+          <button class="btn" onclick="toggleRecord()" id="rec-btn" style="background:var(--red);color:white;border-radius:10px;padding:6px 14px;font-size:0.8rem">⏺ Nahrát</button>
+          <button class="btn" onclick="playRecording()" style="background:var(--green);color:#0d1117;border-radius:10px;padding:6px 14px;font-size:0.8rem">▶ Přehrát</button>
+          <button class="btn" onclick="clearRecording()" style="background:var(--s3);border-radius:10px;padding:6px 14px;font-size:0.8rem">🗑️ Smazat</button>
+        </div>
+        <div id="rec-status" style="font-size:0.75rem;color:var(--muted);margin-top:6px"></div>
+      </div>
+      <div class="card card-p" style="margin-bottom:12px">
+        <div style="font-family:'Fredoka One',cursive;font-size:0.9rem;color:var(--yellow);margin-bottom:10px">🥁 Dotykové Bicie</div>
+        <div id="drum-pads" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px"></div>
+      </div>
+      <div class="card card-p">
+        <div style="font-family:'Fredoka One',cursive;font-size:0.9rem;color:var(--yellow);margin-bottom:10px">🔗 Playlist (YouTube odkaz)</div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <input class="m-inp" id="yt-url" placeholder="Vlož YouTube odkaz..." style="flex:1;margin:0;padding:8px">
+          <button class="btn" onclick="addYT()" style="background:var(--red);color:white;border-radius:10px;padding:8px 14px">➕</button>
+        </div>
+        <div id="yt-list"></div>
+      </div>
+    </div>
+
+    <!-- COMBOS PAGE -->
+    <div class="page" id="pg-combos">
+      <div class="sec-hd">⚡ Combo Výzvy</div>
+      <div class="card card-p" style="margin-bottom:12px;background:linear-gradient(135deg,var(--s2),#1a1040)">
+        <div style="text-align:center;font-size:2.5rem;margin-bottom:6px">⚡</div>
+        <div style="font-family:'Fredoka One',cursive;font-size:1.1rem;text-align:center;color:var(--yellow)">Splň více věcí najednou = BONUS XP!</div>
+        <div style="font-size:0.8rem;color:var(--muted);text-align:center;margin-top:4px">Ranní rutina, škola i volný čas</div>
+      </div>
+      <div id="combo-list"></div>
+      <div id="combo-progress" style="margin-top:12px"></div>
+    </div>
+
+    <!-- ADMIN PAGE -->
+    <div class="page" id="pg-admin">
+      <div class="sec-hd">⚙️ Admin Panel</div>
+      <div class="card card-p" style="margin-bottom:12px">
+        <div style="font-family:'Fredoka One',cursive;color:var(--yellow);margin-bottom:10px">📋 Ke schválení ({{COUNT}})</div>
+        <div id="admin-pending"></div>
+      </div>
+      <div class="card card-p" style="margin-bottom:12px">
+        <div style="font-family:'Fredoka One',cursive;color:var(--yellow);margin-bottom:10px">💰 Nastavení bodů</div>
+        <div id="admin-xp-settings"></div>
+      </div>
+      <div class="card card-p" style="margin-bottom:12px">
+        <div style="font-family:'Fredoka One',cursive;color:var(--yellow);margin-bottom:10px">🔑 PIN kódy hráčů</div>
+        <div id="admin-pins"></div>
+      </div>
+      <div class="card card-p">
+        <div style="font-family:'Fredoka One',cursive;color:var(--yellow);margin-bottom:10px">⚡ Správa Combo výzev</div>
+        <button class="btn success" onclick="openM('m-add-combo')" style="width:100%;border-radius:12px;padding:10px">➕ Přidat Combo</button>
+        <div id="admin-combos" style="margin-top:10px"></div>
+      </div>
+    </div>
+
     <!-- CHAT -->
     <div class="page" id="pg-chat">
       <div id="dq-container"></div>
@@ -831,7 +1035,7 @@ textarea.m-inp{resize:none;min-height:72px;}
           <div class="xp-txt" id="rw-xp">0 XP</div>
         </div>
       </div>
-      <div class="sec-hd">🎁 Odměny</div>
+      <div class="sec-hd" style="justify-content:space-between">🎁 Odměny <button onclick="setPropType('reward');openM('m-propose')" style="background:var(--purple);color:white;border:none;border-radius:10px;padding:5px 12px;font-size:0.75rem;font-weight:800;cursor:pointer">💡 Navrhnout</button></div>
       <div id="reward-list"></div>
       <div class="sep"></div>
       <div id="secret-wish-section"></div>
@@ -853,6 +1057,9 @@ textarea.m-inp{resize:none;min-height:72px;}
     <button class="nav-btn" onclick="goPage('chat',this)"><span class="ni">💬</span>Chat</button>
     <button class="nav-btn" onclick="goPage('feedback',this)"><span class="ni">📣</span>Tabule</button>
     <button class="nav-btn" onclick="goPage('rewards',this)"><span class="ni">🎁</span>Odměny</button>
+    <button class="nav-btn" onclick="goPage('music',this)"><span class="ni">🎵</span>Hudba</button>
+    <button class="nav-btn" onclick="goPage('combos',this)"><span class="ni">⚡</span>Combo</button>
+    <button class="nav-btn" id="nav-admin" onclick="goPage('admin',this)" style="display:none"><span class="ni">⚙️</span>Admin</button>
   </nav>
 </div>
 
@@ -1030,6 +1237,9 @@ function saveAll() {
   _lastLocal = Date.now();
   const d = {
     players:S.players, completedTasks:S.completedTasks, hygieneLog:S.hygieneLog,
+    customTasks:S.customTasks||[], customRewards:S.customRewards||[],
+    pendingApprovals:S.pendingApprovals||[], combos:S.combos||[],
+    xpSettings:S.xpSettings||{}, playerPins:S.playerPins||{},
     screenTime:S.screenTime, schoolMarks:S.schoolMarks.slice(-100),
     feedItems:S.feedItems.slice(-100), dqs:S.dqs.slice(-50), dqAnswers:S.dqAnswers,
     gallery:S.gallery.slice(-30), timerChallenges:S.timerChallenges,
@@ -1049,6 +1259,9 @@ function loadAll() {
       S.dqs=d.dqs||[]; S.dqAnswers=d.dqAnswers||{};
       S.gallery=d.gallery||[]; S.timerChallenges=d.timerChallenges||[];
       S.votes=d.votes||[]; S.hobbies=d.hobbies||{}; S.wishes=d.wishes||{};
+      S.customTasks=d.customTasks||[]; S.customRewards=d.customRewards||[];
+      S.pendingApprovals=d.pendingApprovals||[]; S.combos=d.combos||[];
+      S.xpSettings=d.xpSettings||{}; S.playerPins=d.playerPins||{};
     } else {
       S.players=[{id:1,name:'Táta',avatar:'👑',xp:0,role:'parent',color:'c0'},{id:2,name:'Máma',avatar:'⭐',xp:0,role:'parent',color:'c1'}];
       saveAll();
@@ -1137,14 +1350,18 @@ function getTodayXP(pid){
 // ═══════════════════════════
 // LOGIN
 // ═══════════════════════════
+// ── PIN SYSTEM ──
+let _pinTarget=null, _pinBuffer='', _setPinTarget=null, _setPinBuffer='';
+
 function renderLogin(){
   const g=document.getElementById('player-grid');
   g.innerHTML='';
   S.players.forEach((p,i)=>{
     const d=document.createElement('div');
     d.className=`p-card ${p.color||PCOLORS[i%6]}`;
-    d.innerHTML=`<div class="p-ava">${p.avatar}</div><div class="p-name">${p.name}</div><div class="p-xp">${p.role==='parent'?'👑':'👶'} · ⭐${p.xp}</div>`;
-    d.onclick=()=>loginAs(p.id);
+    const hasPin = S.playerPins && S.playerPins[p.id];
+    d.innerHTML=`<div class="p-ava">${p.avatar}</div><div class="p-name">${p.name}</div><div class="p-xp">${p.role==='parent'?'👑':'👶'} · ⭐${p.xp}</div><div style="font-size:0.6rem;color:var(--muted);margin-top:2px">${hasPin?'🔒 PIN':'🔓 Bez PIN'}</div>`;
+    d.onclick=()=>requestPin(p.id);
     g.appendChild(d);
   });
   if(S.players.length<6){
@@ -1154,10 +1371,88 @@ function renderLogin(){
     g.appendChild(d);
   }
 }
+
+function requestPin(id){
+  const p=S.players.find(x=>x.id===id);
+  if(!p)return;
+  // If no PIN set, login directly
+  if(!S.playerPins||!S.playerPins[p.id]){
+    loginAs(id); return;
+  }
+  // Show PIN modal
+  _pinTarget=id; _pinBuffer='';
+  document.getElementById('pin-ava').textContent=p.avatar;
+  document.getElementById('pin-name').textContent=p.name;
+  document.getElementById('pin-err').textContent='';
+  updatePinDots('pd', _pinBuffer);
+  openM('m-pin');
+}
+
+function pinPress(k){
+  if(k==='del'){_pinBuffer=_pinBuffer.slice(0,-1);}
+  else if(_pinBuffer.length<4){_pinBuffer+=k;}
+  updatePinDots('pd',_pinBuffer);
+  document.getElementById('pin-err').textContent='';
+  if(_pinBuffer.length===4) checkPin();
+}
+
+function checkPin(){
+  const stored = S.playerPins && S.playerPins[_pinTarget];
+  if(_pinBuffer===stored){
+    closeM('m-pin');
+    loginAs(_pinTarget);
+  } else {
+    document.getElementById('pin-err').textContent='❌ Špatný PIN, zkus znovu';
+    ['pd0','pd1','pd2','pd3'].forEach(id=>{
+      document.getElementById(id).classList.add('error');
+      setTimeout(()=>document.getElementById(id).classList.remove('error'),600);
+    });
+    _pinBuffer='';
+    setTimeout(()=>updatePinDots('pd',_pinBuffer),600);
+  }
+}
+
+function updatePinDots(prefix, buf){
+  for(let i=0;i<4;i++){
+    const d=document.getElementById(prefix+i);
+    if(d){d.classList.toggle('filled',i<buf.length);d.classList.remove('error');}
+  }
+}
+
+// Admin: set PIN for player
+function openSetPin(pid){
+  _setPinTarget=pid; _setPinBuffer='';
+  const p=S.players.find(x=>x.id===pid);
+  document.getElementById('setpin-for').textContent='pro: '+(p?p.name:'?');
+  document.getElementById('setpin-err').textContent='';
+  updatePinDots('spd',_setPinBuffer);
+  openM('m-setpin');
+}
+
+function setPinPress(k){
+  if(k==='del'){_setPinBuffer=_setPinBuffer.slice(0,-1);}
+  else if(_setPinBuffer.length<4){_setPinBuffer+=k;}
+  updatePinDots('spd',_setPinBuffer);
+  if(_setPinBuffer.length===4) confirmSetPin();
+}
+
+function confirmSetPin(){
+  if(!S.playerPins)S.playerPins={};
+  S.playerPins[_setPinTarget]=_setPinBuffer;
+  saveField('playerPins',S.playerPins);
+  closeM('m-setpin');
+  toast('🔑 PIN nastaven!','');
+  renderAdminPins();
+}
+
 function loginAs(id){
   S.currentPlayer=S.players.find(p=>p.id===id);
   document.getElementById('login-page').style.display='none';
   document.getElementById('app-page').style.display='flex';
+  // Show admin nav button only for admin (first parent)
+  const isAdmin = S.currentPlayer.role==='parent' && 
+    S.players.filter(p=>p.role==='parent').findIndex(p=>p.id===id)===0;
+  document.getElementById('nav-admin').style.display = isAdmin ? 'flex' : 'none';
   checkLock();
   refreshAll();
 }
@@ -1187,6 +1482,8 @@ function refreshAll(){
   renderFeed('all');
   renderRewards();
   renderInetBanner();
+  renderCombos();
+  renderAdminPage();
   // show PWA hint
   if(!window.matchMedia('(display-mode: standalone)').matches){
     document.getElementById('pwa-hint').style.display='block';
@@ -1308,7 +1605,7 @@ function renderTasks(cat){
   const done=S.completedTasks[key]||[];
   const cats=[{k:'all',l:'Vše'},{k:'home',l:'🏠 Domácnost'},{k:'fun',l:'🎯 Aktivity'}];
   document.getElementById('task-pills').innerHTML=cats.map(c=>`<div class="pill${c.k===curTaskCat?' on':''}" onclick="renderTasks('${c.k}')">${c.l}</div>`).join('');
-  const items=curTaskCat==='all'?TASKS:TASKS.filter(t=>t.cat===curTaskCat);
+  const allT=[...TASKS,...(S.customTasks||[])];const items=curTaskCat==='all'?allT:allT.filter(t=>t.cat===curTaskCat||t.cat==='custom');
   document.getElementById('task-list').innerHTML=items.map(t=>`
     <div class="task-row${done.includes(t.id)?' done':''}">
       <div class="task-ico">${t.icon}</div>
@@ -2124,7 +2421,7 @@ function renderFeed(f){
 // ═══════════════════════════
 function renderRewards(){
   const p=S.currentPlayer;
-  document.getElementById('reward-list').innerHTML=REWARDS.map(r=>`
+  const allR=[...REWARDS,...(S.customRewards||[])];document.getElementById('reward-list').innerHTML=allR.map(r=>`
     <div class="rw-row">
       <div class="rw-ico">${r.icon}</div>
       <div class="rw-body">
@@ -2152,6 +2449,475 @@ function redeem(cost,title){
 // Start Firebase — načte data a spustí sync
 initFirebase();
 
+
+
+// ═══════════════════════════
+// PROPOSAL SYSTEM (Custom tasks/rewards)
+// ═══════════════════════════
+let _propType = 'task';
+
+function setPropType(t){
+  _propType=t;
+  document.getElementById('prop-task-btn').style.background = t==='task' ? 'var(--green)' : 'var(--s3)';
+  document.getElementById('prop-reward-btn').style.background = t==='reward' ? 'var(--purple)' : 'var(--s3)';
+  document.getElementById('prop-xp-label').textContent = t==='task' ? 'Body za splnění (XP)' : 'Cena v bodech (XP)';
+}
+
+function openPropose(){
+  setPropType('task');
+  document.getElementById('prop-icon').value='';
+  document.getElementById('prop-title').value='';
+  document.getElementById('prop-desc').value='';
+  document.getElementById('prop-xp').value='';
+  openM('m-propose');
+}
+
+function submitProposal(){
+  const title=document.getElementById('prop-title').value.trim();
+  if(!title){toast('Zadej název','r');return;}
+  const xp=parseInt(document.getElementById('prop-xp').value)||25;
+  const proposal={
+    id:'prop_'+Date.now(),
+    type:_propType,
+    icon:document.getElementById('prop-icon').value||'🌟',
+    title,
+    desc:document.getElementById('prop-desc').value.trim(),
+    xp,
+    by:S.currentPlayer.name,
+    byId:S.currentPlayer.id,
+    status:'pending',
+    created:Date.now()
+  };
+  if(!S.pendingApprovals)S.pendingApprovals=[];
+  S.pendingApprovals.push(proposal);
+  saveField('pendingApprovals',S.pendingApprovals);
+  addChatMsg('💡 '+S.currentPlayer.name+' navrhl/a nový '+(_propType==='task'?'úkol':'odměnu')+': '+title+' — čeká na schválení správce',S.currentPlayer.id,'system');
+  closeM('m-propose');
+  toast('Návrh odeslán ke schválení! 💡');
+  updatePendingBadge();
+}
+
+function approveProposal(id){
+  const p=S.pendingApprovals.find(x=>x.id===id);
+  if(!p)return;
+  p.status='approved';
+  if(p.type==='task'){
+    if(!S.customTasks)S.customTasks=[];
+    S.customTasks.push({id:'ct_'+Date.now(),cat:'custom',icon:p.icon,title:p.title,desc:p.desc,xp:p.xp,diff:'⭐'});
+  } else {
+    if(!S.customRewards)S.customRewards=[];
+    S.customRewards.push({id:'cr_'+Date.now(),icon:p.icon,title:p.title,desc:p.desc,cost:p.xp});
+  }
+  S.pendingApprovals=S.pendingApprovals.filter(x=>x.id!==id);
+  saveField('pendingApprovals',S.pendingApprovals);
+  saveField('customTasks',S.customTasks);
+  saveField('customRewards',S.customRewards);
+  addChatMsg('✅ Správce schválil: '+p.title+' ('+p.xp+' XP)',S.currentPlayer.id,'system');
+  toast('✅ Schváleno a přidáno!');
+  renderAdminPage();
+  renderTasks('all');
+  renderRewards();
+  updatePendingBadge();
+}
+
+function rejectProposal(id){
+  const p=S.pendingApprovals.find(x=>x.id===id);
+  if(!p)return;
+  S.pendingApprovals=S.pendingApprovals.filter(x=>x.id!==id);
+  saveField('pendingApprovals',S.pendingApprovals);
+  addChatMsg('❌ Správce zamítl návrh: '+p.title,S.currentPlayer.id,'system');
+  toast('Zamítnuto');
+  renderAdminPage();
+  updatePendingBadge();
+}
+
+function updatePendingBadge(){
+  const count=(S.pendingApprovals||[]).filter(x=>x.status==='pending').length;
+  const btn=document.getElementById('nav-admin');
+  if(btn){
+    let bdg=btn.querySelector('.bdg');
+    if(!bdg){bdg=document.createElement('span');bdg.className='bdg';btn.appendChild(bdg);}
+    bdg.textContent=count;
+    bdg.className='bdg'+(count>0?' on':'');
+  }
+}
+
+// ═══════════════════════════
+// ADMIN PAGE
+// ═══════════════════════════
+function renderAdminPage(){
+  renderAdminPending();
+  renderAdminXPSettings();
+  renderAdminPins();
+  renderAdminCombos();
+  updatePendingBadge();
+}
+
+function renderAdminPending(){
+  const el=document.getElementById('admin-pending');
+  if(!el)return;
+  const pending=(S.pendingApprovals||[]).filter(x=>x.status==='pending');
+  const hd=el.closest('.card-p')?.querySelector('div');
+  if(hd)hd.textContent='📋 Ke schválení ('+pending.length+')';
+  if(!pending.length){el.innerHTML='<div style="color:var(--muted);font-size:0.82rem;text-align:center;padding:10px">Žádné návrhy ke schválení ✓</div>';return;}
+  el.innerHTML='';
+  pending.forEach(p=>{
+    const d=document.createElement('div');
+    d.className='proposal-card';
+    d.innerHTML=`
+      <div class="prop-type">${p.type==='task'?'📋 Úkol':'🎁 Odměna'} · od ${p.by}</div>
+      <div class="prop-title">${p.icon} ${p.title}</div>
+      <div class="prop-by">${p.desc} · ${p.xp} XP</div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button onclick="approveProposal('${p.id}')" style="flex:1;background:var(--green);color:#0d1117;border:none;border-radius:10px;padding:8px;font-weight:800;cursor:pointer">✅ Schválit</button>
+        <button onclick="rejectProposal('${p.id}')" style="flex:1;background:var(--red);color:white;border:none;border-radius:10px;padding:8px;font-weight:800;cursor:pointer">❌ Zamítnout</button>
+      </div>`;
+    el.appendChild(d);
+  });
+}
+
+function renderAdminXPSettings(){
+  const el=document.getElementById('admin-xp-settings');
+  if(!el)return;
+  if(!S.xpSettings)S.xpSettings={};
+  const defaults=[
+    {key:'task_easy',label:'Lehký úkol (⭐)',def:15},
+    {key:'task_med',label:'Střední úkol (⭐⭐)',def:35},
+    {key:'task_hard',label:'Těžký úkol (⭐⭐⭐)',def:75},
+    {key:'task_epic',label:'Epický úkol (⭐⭐⭐⭐)',def:200},
+    {key:'hygiene',label:'Hygiena (průměr)',def:10},
+    {key:'school_1',label:'Jednička ve škole',def:50},
+    {key:'school_5',label:'Pětka ve škole',def:-50},
+    {key:'reward_small',label:'Malá odměna min.',def:80},
+    {key:'reward_big',label:'Velká odměna min.',def:500},
+  ];
+  el.innerHTML='';
+  defaults.forEach(item=>{
+    const val=S.xpSettings[item.key]??item.def;
+    const row=document.createElement('div');
+    row.className='xp-setting-row';
+    row.innerHTML=`<span class="xp-setting-label">${item.label}</span><input class="xp-inp" type="number" value="${val}" onchange="saveXPSetting('${item.key}',this.value)">`;
+    el.appendChild(row);
+  });
+}
+
+function saveXPSetting(key,val){
+  if(!S.xpSettings)S.xpSettings={};
+  S.xpSettings[key]=parseInt(val)||0;
+  saveField('xpSettings',S.xpSettings);
+  toast('💰 Nastavení uloženo');
+}
+
+function renderAdminPins(){
+  const el=document.getElementById('admin-pins');
+  if(!el)return;
+  el.innerHTML='';
+  S.players.forEach(p=>{
+    const hasPin=S.playerPins&&S.playerPins[p.id];
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)';
+    row.innerHTML=`
+      <span style="font-size:1.3rem">${p.avatar}</span>
+      <span style="flex:1;font-weight:700">${p.name}</span>
+      <span style="font-size:0.75rem;color:${hasPin?'var(--green)':'var(--muted)'}">${hasPin?'🔒 PIN nastaven':'🔓 Bez PIN'}</span>
+      <button onclick="openSetPin(${p.id})" style="background:var(--blue);color:white;border:none;border-radius:8px;padding:5px 10px;font-size:0.75rem;cursor:pointer">${hasPin?'Změnit':'Nastavit'}</button>
+      ${hasPin?`<button onclick="removePin(${p.id})" style="background:var(--red);color:white;border:none;border-radius:8px;padding:5px 10px;font-size:0.75rem;cursor:pointer">Odebrat</button>`:''}`;
+    el.appendChild(row);
+  });
+}
+
+function removePin(pid){
+  if(!S.playerPins)return;
+  delete S.playerPins[pid];
+  saveField('playerPins',S.playerPins);
+  renderAdminPins();
+  toast('PIN odebrán');
+}
+
+function renderAdminCombos(){
+  const el=document.getElementById('admin-combos');
+  if(!el)return;
+  const combos=S.combos||[];
+  if(!combos.length){el.innerHTML='<div style="color:var(--muted);font-size:0.82rem">Zatím žádné combos</div>';return;}
+  el.innerHTML='';
+  combos.forEach((combo,i)=>{
+    const d=document.createElement('div');
+    d.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)';
+    d.innerHTML=`<span>${combo.icon}</span><span style="flex:1;font-weight:700">${combo.name}</span><span style="color:var(--yellow);font-size:0.8rem">+${combo.bonus} XP</span><button onclick="deleteCombo(${i})" style="background:var(--red);color:white;border:none;border-radius:8px;padding:4px 8px;font-size:0.72rem;cursor:pointer">🗑️</button>`;
+    el.appendChild(d);
+  });
+}
+
+function deleteCombo(i){
+  S.combos.splice(i,1);
+  saveField('combos',S.combos);
+  renderAdminPage();
+  renderCombos();
+}
+
+// ═══════════════════════════
+// COMBO SYSTEM
+// ═══════════════════════════
+const DEFAULT_COMBOS=[
+  {id:'c1',name:'Ranní rutina superhrdiny',icon:'🌅',bonus:60,items:['Zuby ráno','Ustlat postel','Připraven včas','Hezké pozdravení rodičů'],targets:'kids'},
+  {id:'c2',name:'Školní šampion',icon:'🏆',bonus:80,items:['Domácí úkoly splněny','Přečetl/a 20 min','Bez telefonu při učení'],targets:'kids'},
+  {id:'c3',name:'Pomocník dne',icon:'🤝',bonus:50,items:['Jeden domácí úkol splněn','Pomohl/a sourozenci','Pozdravil/a hezky hosty'],targets:'all'},
+  {id:'c4',name:'Rodinný večer',icon:'🌙',bonus:70,items:['Večeře společně','Bez telefonů u stolu','Hra nebo film spolu'],targets:'all'},
+];
+
+let _comboProgress={}; // {comboId: {itemIdx: bool}}
+
+function saveCombo(){
+  const name=document.getElementById('combo-name').value.trim();
+  if(!name){toast('Zadej název','r');return;}
+  const items=document.getElementById('combo-items').value.split('\n').map(x=>x.trim()).filter(Boolean);
+  if(items.length<2){toast('Přidej alespoň 2 položky','r');return;}
+  const combo={
+    id:'cm_'+Date.now(),
+    name,
+    icon:document.getElementById('combo-icon').value||'⚡',
+    bonus:parseInt(document.getElementById('combo-bonus').value)||50,
+    items,
+    targets:'all',
+    created:Date.now()
+  };
+  if(!S.combos)S.combos=[];
+  S.combos.push(combo);
+  saveField('combos',S.combos);
+  closeM('m-add-combo');
+  toast('⚡ Combo vytvořeno!');
+  renderCombos();
+  renderAdminCombos();
+}
+
+function renderCombos(){
+  const el=document.getElementById('combo-list');
+  if(!el)return;
+  const todayKey=S.currentPlayer?S.currentPlayer.id+'_'+td():'';
+  if(!_comboProgress[todayKey])_comboProgress[todayKey]={};
+  
+  const allCombos=[...DEFAULT_COMBOS,...(S.combos||[])];
+  el.innerHTML='';
+  
+  allCombos.forEach(combo=>{
+    if(!_comboProgress[todayKey][combo.id])_comboProgress[todayKey][combo.id]={};
+    const prog=_comboProgress[todayKey][combo.id];
+    const doneCount=Object.values(prog).filter(Boolean).length;
+    const total=combo.items.length;
+    const allDone=doneCount===total;
+    
+    const card=document.createElement('div');
+    card.className='combo-card';
+    card.innerHTML=`
+      <div class="combo-hd">
+        <span class="combo-ico">${combo.icon}</span>
+        <div>
+          <div class="combo-nm">${combo.name}</div>
+          <div style="font-size:0.72rem;color:var(--muted)">${doneCount}/${total} splněno</div>
+        </div>
+        <span class="combo-bonus">+${combo.bonus} XP bonus</span>
+      </div>
+      <div style="background:var(--s3);border-radius:20px;height:6px;margin-bottom:10px;overflow:hidden">
+        <div style="background:linear-gradient(90deg,var(--purple),var(--yellow));height:100%;width:${Math.round(doneCount/total*100)}%;transition:width .4s;border-radius:20px"></div>
+      </div>`;
+    
+    combo.items.forEach((item,i)=>{
+      const done=!!prog[i];
+      const row=document.createElement('div');
+      row.className='combo-item'+(done?' done':'');
+      row.innerHTML=`<div class="ci-check">${done?'✓':''}</div><span style="font-size:0.85rem">${item}</span>`;
+      if(!allDone||!done){
+        row.onclick=()=>toggleComboItem(combo,i,todayKey,card);
+      }
+      card.appendChild(row);
+    });
+    
+    if(allDone){
+      const win=document.createElement('div');
+      win.className='combo-complete';
+      win.innerHTML=`<div style="font-family:'Fredoka One',cursive;font-size:1.1rem;color:var(--yellow)">⚡ COMBO SPLNĚNO! +${combo.bonus} XP</div>`;
+      card.appendChild(win);
+    }
+    el.appendChild(card);
+  });
+}
+
+function toggleComboItem(combo,itemIdx,todayKey,card){
+  if(!_comboProgress[todayKey])_comboProgress[todayKey]={};
+  if(!_comboProgress[todayKey][combo.id])_comboProgress[todayKey][combo.id]={};
+  const was=_comboProgress[todayKey][combo.id][itemIdx];
+  _comboProgress[todayKey][combo.id][itemIdx]=!was;
+  
+  const doneCount=Object.values(_comboProgress[todayKey][combo.id]).filter(Boolean).length;
+  const total=combo.items.length;
+  
+  if(doneCount===total && !was){
+    // All done! Award bonus
+    addXP(S.currentPlayer.id,combo.bonus,'⚡ COMBO: '+combo.name+' +'+combo.bonus+' XP!');
+    addChatMsg('⚡ '+S.currentPlayer.name+' splnil/a COMBO: '+combo.name+' (+'+combo.bonus+' XP)!',S.currentPlayer.id,'system');
+    confetti();setTimeout(confetti,300);setTimeout(confetti,600);
+  }
+  renderCombos();
+}
+
+// ═══════════════════════════
+// MUSIC & PIANO
+// ═══════════════════════════
+let _audioCtx=null, _recording=[], _isRecording=false, _recTimer=null, _recStart=0;
+let _ytList=[];
+
+function getAudioCtx(){
+  if(!_audioCtx)_audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  return _audioCtx;
+}
+
+const NOTES=[
+  {name:'C4',freq:261.63},{name:'D4',freq:293.66},{name:'E4',freq:329.63},
+  {name:'F4',freq:349.23},{name:'G4',freq:392.00},{name:'A4',freq:440.00},
+  {name:'B4',freq:493.88},{name:'C5',freq:523.25},{name:'D5',freq:587.33},
+  {name:'E5',freq:659.25},{name:'F5',freq:698.46},{name:'G5',freq:783.99},
+  {name:'A5',freq:880.00},{name:'B5',freq:987.77},{name:'C6',freq:1046.50},
+];
+const BLACK_KEYS=[1,3,-1,6,8,10,-1,13,-1]; // positions of black keys relative
+
+function initPiano(){
+  const el=document.getElementById('piano-keys');
+  if(!el||el.children.length>0)return;
+  NOTES.forEach((n,i)=>{
+    const isBlack=[1,3,6,8,10,13].includes(i);
+    const key=document.createElement('button');
+    key.style.cssText=`min-width:${isBlack?28:40}px;height:${isBlack?70:110}px;background:${isBlack?'#222':'white'};color:${isBlack?'white':'#222'};border:2px solid #333;border-radius:${isBlack?'0 0 6px 6px':'0 0 8px 8px'};font-size:0.6rem;font-weight:700;cursor:pointer;flex-shrink:0;transition:filter .1s;touch-action:manipulation;margin-left:${isBlack?'-14px':i>0?'2px':'0'};z-index:${isBlack?2:1};position:relative;`;
+    key.textContent=isBlack?'':n.name;
+    key.addEventListener('pointerdown',e=>{e.preventDefault();playNote(n.freq);});
+    el.appendChild(key);
+  });
+}
+
+function playNote(freq,dur=0.4){
+  const ctx=getAudioCtx();
+  const osc=ctx.createOscillator();
+  const gain=ctx.createGain();
+  const type=document.getElementById('piano-sound')?.value||'sine';
+  osc.type=type;
+  osc.frequency.setValueAtTime(freq,ctx.currentTime);
+  gain.gain.setValueAtTime(0.4,ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+  osc.connect(gain);gain.connect(ctx.destination);
+  osc.start();osc.stop(ctx.currentTime+dur);
+  if(_isRecording)_recording.push({freq,time:Date.now()-_recStart,dur:dur*1000});
+}
+
+function toggleRecord(){
+  _isRecording=!_isRecording;
+  const btn=document.getElementById('rec-btn');
+  const status=document.getElementById('rec-status');
+  if(_isRecording){
+    _recording=[];_recStart=Date.now();
+    btn.style.background='var(--red)';btn.textContent='⏹ Stop';
+    status.textContent='⏺ Nahrávám...';
+    status.style.color='var(--red)';
+  } else {
+    btn.style.background='var(--s3)';btn.textContent='⏺ Nahrát';
+    status.textContent='✓ Nahráno '+_recording.length+' not';
+    status.style.color='var(--green)';
+  }
+}
+
+function playRecording(){
+  if(!_recording.length){toast('Nejdřív neco nahraj!');return;}
+  _recording.forEach(note=>{
+    setTimeout(()=>playNote(note.freq,note.dur/1000),note.time);
+  });
+}
+
+function clearRecording(){_recording=[];document.getElementById('rec-status').textContent='Smazáno';}
+
+const DRUMS=[
+  {name:'Kick',color:'#ff5572',freq:60,dur:0.5},
+  {name:'Snare',color:'#4da6ff',freq:200,dur:0.2},
+  {name:'Hi-Hat',color:'#ffd166',freq:800,dur:0.08},
+  {name:'Tom',color:'#3dd68c',freq:120,dur:0.35},
+  {name:'Crash',color:'#b57bee',freq:600,dur:0.8},
+  {name:'Ride',color:'#ff8c42',freq:700,dur:0.5},
+  {name:'Clap',color:'#2dd4bf',freq:300,dur:0.15},
+  {name:'Bass',color:'#ff6eb4',freq:80,dur:0.6},
+];
+
+function initDrums(){
+  const el=document.getElementById('drum-pads');
+  if(!el||el.children.length>0)return;
+  DRUMS.forEach(d=>{
+    const pad=document.createElement('button');
+    pad.style.cssText=`background:${d.color}22;border:2px solid ${d.color};border-radius:14px;padding:16px 8px;color:${d.color};font-weight:800;font-size:0.82rem;cursor:pointer;transition:all .1s;touch-action:manipulation;`;
+    pad.textContent=d.name;
+    pad.addEventListener('pointerdown',e=>{
+      e.preventDefault();
+      pad.style.background=d.color;pad.style.color='white';
+      setTimeout(()=>{pad.style.background=d.color+'22';pad.style.color=d.color;},150);
+      playDrum(d);
+    });
+    el.appendChild(pad);
+  });
+}
+
+function playDrum(d){
+  const ctx=getAudioCtx();
+  const osc=ctx.createOscillator();
+  const gain=ctx.createGain();
+  const noise=d.freq>400;
+  if(noise){
+    const buf=ctx.createBuffer(1,ctx.sampleRate*d.dur,ctx.sampleRate);
+    const data=buf.getChannelData(0);
+    for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;
+    const src=ctx.createBufferSource();
+    src.buffer=buf;
+    const g=ctx.createGain();
+    g.gain.setValueAtTime(0.5,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+d.dur);
+    src.connect(g);g.connect(ctx.destination);src.start();
+  } else {
+    osc.frequency.setValueAtTime(d.freq,ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(d.freq*0.1,ctx.currentTime+d.dur);
+    gain.gain.setValueAtTime(0.8,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+d.dur);
+    osc.connect(gain);gain.connect(ctx.destination);
+    osc.start();osc.stop(ctx.currentTime+d.dur);
+  }
+  if(_isRecording)_recording.push({freq:d.freq,time:Date.now()-_recStart,dur:d.dur*1000});
+}
+
+function addYT(){
+  const url=document.getElementById('yt-url').value.trim();
+  if(!url){toast('Vlož YouTube odkaz','r');return;}
+  const title=prompt('Název skladby?')||url;
+  _ytList.push({url,title});
+  document.getElementById('yt-url').value='';
+  renderYTList();
+}
+
+function renderYTList(){
+  const el=document.getElementById('yt-list');
+  if(!el)return;
+  if(!_ytList.length){el.innerHTML='<div style="color:var(--muted);font-size:0.8rem;text-align:center;padding:10px">Zatím žádné skladby</div>';return;}
+  el.innerHTML='';
+  _ytList.forEach((item,i)=>{
+    const d=document.createElement('div');
+    d.style.cssText='display:flex;align-items:center;gap:10px;padding:10px;background:var(--s2);border-radius:12px;margin-bottom:8px;';
+    d.innerHTML=`<span style="font-size:1.3rem">🎵</span><span style="flex:1;font-size:0.85rem;font-weight:700">${item.title}</span>
+      <a href="${item.url}" target="_blank" style="background:var(--red);color:white;border-radius:8px;padding:5px 10px;font-size:0.75rem;text-decoration:none">▶ Otevřít</a>
+      <button onclick="_ytList.splice(${i},1);renderYTList()" style="background:var(--s3);border:none;border-radius:8px;padding:5px 8px;color:var(--muted);cursor:pointer">🗑️</button>`;
+    el.appendChild(d);
+  });
+}
+
+// Init music page when navigated to
+const _origGoPage=goPage;
+function goPage(id,btn){
+  _origGoPage(id,btn);
+  if(id==='music'){initPiano();initDrums();renderYTList();}
+  if(id==='combos')renderCombos();
+  if(id==='admin')renderAdminPage();
+}
 
 // ═══════════════════════════
 // WALLPAPER & THEMES
